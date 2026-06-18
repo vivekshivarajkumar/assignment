@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --uber-black: #0a0a0b;
+  --uber-gray-50: #f3f4f7;
+  --uber-gray-100: #ebedf2;
+  --uber-gray-200: #e1e3ea;
+  --uber-gray-400: #a6a9b6;
+  --uber-gray-500: #595d6b;
+  --uber-gray-600: #6b6f7e;
+
+  /* Accent — soft violet, inspired by modern learning dashboards */
+  --accent: #6c5ce7;
+  --accent-hover: #5a4bd4;
+  --accent-light: #efedfd;
+  --accent-ring: #d9d4fb;
+
+  --uber-green: #138a5b;
+  --uber-green-light: #e4f6ed;
+
+  --background: #f4f5f8;
+  --surface: #ffffff;
+  --foreground: #0a0a0b;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-uber-black: var(--uber-black);
+  --color-uber-gray-50: var(--uber-gray-50);
+  --color-uber-gray-100: var(--uber-gray-100);
+  --color-uber-gray-200: var(--uber-gray-200);
+  --color-uber-gray-400: var(--uber-gray-400);
+  --color-uber-gray-500: var(--uber-gray-500);
+  --color-uber-gray-600: var(--uber-gray-600);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
+  --color-accent-ring: var(--accent-ring);
+  --color-uber-green: var(--uber-green);
+  --color-uber-green-light: var(--uber-green-light);
+  --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@layer components {
+  .uber-card {
+    @apply rounded-2xl bg-white ring-1 ring-black/[0.06] shadow-[0_1px_2px_rgba(16,18,40,0.04),0_12px_28px_-18px_rgba(16,18,40,0.18)];
+  }
+
+  .uber-card-hover {
+    @apply rounded-2xl bg-white ring-1 ring-black/[0.06] shadow-[0_1px_2px_rgba(16,18,40,0.04),0_12px_28px_-18px_rgba(16,18,40,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:ring-accent-ring hover:shadow-[0_18px_40px_-20px_rgba(76,68,180,0.35)];
+  }
+
+  .uber-btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#272727] disabled:cursor-not-allowed disabled:bg-uber-gray-100 disabled:text-uber-gray-400;
+  }
+
+  .uber-btn-accent {
+    @apply inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(108,92,231,0.6)] transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .uber-btn-secondary {
+    @apply inline-flex items-center justify-center rounded-full border border-uber-gray-200 bg-white px-6 py-3 text-sm font-semibold text-black transition-colors hover:border-black hover:bg-uber-gray-50 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .uber-btn-ghost {
+    @apply text-sm font-medium text-uber-gray-500 transition-colors hover:text-accent disabled:opacity-40;
+  }
+
+  .uber-input {
+    @apply w-full rounded-xl border border-uber-gray-200 bg-white px-4 py-3 text-sm text-black outline-none transition-shadow placeholder:text-uber-gray-400 focus:border-accent focus:ring-2 focus:ring-accent-ring;
+  }
+
+  .uber-label {
+    @apply block text-sm font-medium text-black;
+  }
+
+  .uber-section-title {
+    @apply text-xs font-semibold uppercase tracking-wider text-uber-gray-600;
+  }
+
+  .uber-heading-xl {
+    @apply text-4xl font-bold tracking-tight text-black sm:text-5xl sm:leading-[1.1];
+  }
+
+  .uber-heading-lg {
+    @apply text-2xl font-bold tracking-tight text-black;
+  }
+
+  .uber-body {
+    @apply text-base leading-relaxed text-uber-gray-500;
+  }
+
+  .uber-divider {
+    @apply border-t border-uber-gray-100;
+  }
 }

@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CareerCrafter AI — FuturePath Careers Pilot
 
-## Getting Started
+Generative AI career acceleration copilot built for **Caselet 2** (6MBP302 Generative AI Product Management).
 
-First, run the development server:
+## Product Features
+
+| Feature | Spec alignment |
+|---------|----------------|
+| **Job Requirement Fetcher** | URL scrape + Gemini structured extraction (must-have/nice-to-have skills, seniority, domain) |
+| **Resume Intelligence Parser** | Candidate profile graph with skills, evidence, seniority, candidate type |
+| **Fit Scoring Engine** | Weighted formula: 30% relatedness + 25% preparedness + 20% evidence + 10% ATS + 10% seniority + 5% domain |
+| **Authenticity Guardrail** | Blocks tailoring when relatedness &lt; 35, evidence &lt; 30%, must-have &lt; 25%, or seniority gap &gt; 2 levels |
+| **Ethical Resume Customizer** | Truth-only rewriting via Gemini Flash |
+| **Cover Letter Generator** | Role-specific, candidate-type aware |
+| **Skill Development Path** | 12-week milestone plan from gaps |
+| **Networking Message Drafter** | Recruiter, hiring manager, alumni, referral contexts |
+| **Adaptive Mock Interview** | Multi-turn Q&A with coach feedback |
+| **Role Insights** | Interview questions, FAQs, pay scale from web |
+
+## Stack
+
+- Next.js 16 · SQLite (Drizzle) · Gemini Flash (primary) · OpenAI (fallback)
+
+## Quick Start
 
 ```bash
+npm install
+cp .env.example .env.local
+# Add GEMINI_API_KEY (recommended)
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GEMINI_API_KEY` | Recommended | Gemini Flash for all generative features |
+| `GEMINI_CHAT_MODEL` | No | Default: `gemini-2.5-flash` |
+| `OPENAI_API_KEY` | Fallback | Used if Gemini unavailable |
 
-## Learn More
+## API Routes
 
-To learn more about Next.js, take a look at the following resources:
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/resume/upload` | Parse resume + profile graph + match jobs |
+| GET | `/api/jobs` | List jobs with fit scores |
+| POST | `/api/jobs/add-link` | Fetch & structure job from URL |
+| GET | `/api/jobs/[id]/fit` | Full fit breakdown |
+| POST | `/api/jobs/[id]/tailor` | Ethical resume customize (guardrailed) |
+| POST | `/api/jobs/[id]/cover-letter` | Generate cover letter |
+| POST | `/api/jobs/[id]/skill-path` | Skill development path |
+| POST | `/api/jobs/[id]/networking` | Outreach message draft |
+| POST | `/api/jobs/[id]/mock-interview` | Adaptive mock interview |
+| GET | `/api/jobs/[id]/insights` | Interview Q&A & pay data |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Pilot Metrics (Target)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Application Success Rate ↑ from 15% baseline
+- User Confidence Score ↑ from 6/10
+- Coach turnaround ↓ from 48 hours
+- High authenticity & fairness scores

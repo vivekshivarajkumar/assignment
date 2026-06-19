@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type VapiClient from "@vapi-ai/web";
+import { IconSpark } from "./icons";
 
 interface VapiInterviewProps {
   jobTitle: string;
@@ -25,6 +26,7 @@ export function VapiInterview({ jobTitle, company }: VapiInterviewProps) {
   const vapiRef = useRef<VapiClient | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [speaking, setSpeaking] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [transcript, setTranscript] = useState<Turn[]>([]);
   const [error, setError] = useState("");
 
@@ -41,6 +43,7 @@ export function VapiInterview({ jobTitle, company }: VapiInterviewProps) {
     }
     setError("");
     setTranscript([]);
+    setMuted(false);
     setStatus("connecting");
     try {
       const { default: Vapi } = await import("@vapi-ai/web");
@@ -100,83 +103,195 @@ export function VapiInterview({ jobTitle, company }: VapiInterviewProps) {
     setStatus("ended");
   }
 
+  function toggleMute() {
+    const next = !muted;
+    vapiRef.current?.setMuted?.(next);
+    setMuted(next);
+  }
+
   if (!PUBLIC_KEY) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         Voice interviews need a Vapi public key. Add{" "}
         <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_VAPI_API_KEY</code>{" "}
-        (and optionally{" "}
-        <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_VAPI_ASSISTANT_ID</code>)
         to <code className="rounded bg-amber-100 px-1">.env.local</code>.
       </div>
     );
   }
 
+  const callLive = status === "active";
+  const interviewerActive = callLive && speaking;
+  const youActive = callLive && !speaking && !muted;
+  const lastLine = transcript[transcript.length - 1];
+
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-gradient-to-br from-accent to-[#8b7bf0] p-5 text-white shadow-[0_18px_40px_-22px_rgba(91,75,214,0.9)]">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2.5 w-2.5 rounded-full bg-white ${
-              status === "active" ? "animate-pulse" : "opacity-60"
-            }`}
-          />
-          <p className="text-sm font-semibold">
-            {status === "idle" && "Voice mock interview"}
-            {status === "connecting" && "Connecting…"}
-            {status === "active" &&
-              (speaking ? "Interviewer speaking…" : "Listening…")}
-            {status === "ended" && "Interview ended"}
-          </p>
-        </div>
-        <p className="mt-1 text-sm text-white/80">
-          {jobTitle} at {company} · spoken, real-time
-        </p>
-      </div>
-
-      <div className="flex gap-2">
-        {status !== "active" ? (
-          <button
-            onClick={start}
-            disabled={status === "connecting"}
-            className="uber-btn-accent"
-          >
-            {status === "connecting"
-              ? "Connecting…"
-              : status === "ended"
-                ? "Start again"
-                : "Start voice interview"}
-          </button>
-        ) : (
-          <button onClick={stop} className="uber-btn-secondary">
-            End interview
-          </button>
-        )}
-      </div>
-
-      {transcript.length > 0 && (
-        <div className="max-h-72 space-y-2 overflow-y-auto rounded-xl bg-uber-gray-50 p-4">
-          {transcript.map((t, i) => (
-            <div key={i} className={t.role === "user" ? "text-right" : "text-left"}>
-              <span
-                className={`inline-block max-w-[85%] rounded-2xl px-3 py-1.5 text-sm ${
-                  t.role === "user"
-                    ? "bg-accent text-white"
-                    : "bg-white text-uber-gray-600 ring-1 ring-black/[0.06]"
-                }`}
-              >
-                {t.text}
+      {/* Meet-style stage */}
+      <div className="rounded-2xl bg-[#0f1014] p-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Tile
+            name="Interviewer"
+            sublabel="AI · CareerCrafter"
+            active={interviewerActive}
+            ring="accent"
+            avatar={
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent to-[#8b7bf0] text-white">
+                <IconSpark className="h-7 w-7" />
               </span>
-            </div>
-          ))}
+            }
+            statusText={
+              status === "connecting"
+                ? "Connecting…"
+                : interviewerActive
+                  ? "Speaking…"
+                  : callLive
+                    ? "Listening"
+                    : "Ready"
+            }
+          />
+          <Tile
+            name="You"
+            sublabel={muted ? "Muted" : "Microphone on"}
+            active={youActive}
+            ring="green"
+            avatar={
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-2xl font-semibold text-white">
+                Y
+              </span>
+            }
+            statusText={
+              !callLive ? "—" : muted ? "Muted" : youActive ? "Your turn" : "…"
+            }
+          />
         </div>
+
+        {/* Live caption */}
+        {lastLine && (
+          <div className="mt-3 rounded-xl bg-black/40 px-4 py-2.5">
+            <p className="text-xs font-medium text-white/50">
+              {lastLine.role === "user" ? "You" : "Interviewer"}
+            </p>
+            <p className="text-sm text-white/90">{lastLine.text}</p>
+          </div>
+        )}
+
+        {/* Control bar */}
+        <div className="mt-3 flex items-center justify-center gap-3">
+          {callLive && (
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-label={muted ? "Unmute" : "Mute"}
+              className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+                muted ? "bg-white text-black" : "bg-white/15 text-white hover:bg-white/25"
+              }`}
+            >
+              <MicIcon muted={muted} />
+            </button>
+          )}
+
+          {!callLive ? (
+            <button
+              type="button"
+              onClick={start}
+              disabled={status === "connecting"}
+              className="inline-flex items-center gap-2 rounded-full bg-uber-green px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              <PhoneIcon />
+              {status === "connecting"
+                ? "Connecting…"
+                : status === "ended"
+                  ? "Start again"
+                  : "Start interview"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={stop}
+              aria-label="Leave call"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500 text-white transition-colors hover:bg-red-600"
+            >
+              <PhoneIcon hang />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {transcript.length > 1 && (
+        <details className="rounded-xl bg-uber-gray-50 p-4">
+          <summary className="cursor-pointer text-sm font-medium text-uber-gray-600">
+            Full transcript
+          </summary>
+          <div className="mt-3 space-y-2">
+            {transcript.map((t, i) => (
+              <div key={i} className={t.role === "user" ? "text-right" : "text-left"}>
+                <span
+                  className={`inline-block max-w-[85%] rounded-2xl px-3 py-1.5 text-sm ${
+                    t.role === "user"
+                      ? "bg-accent text-white"
+                      : "bg-white text-uber-gray-600 ring-1 ring-black/[0.06]"
+                  }`}
+                >
+                  {t.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </p>
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
       )}
     </div>
+  );
+}
+
+function Tile({
+  name,
+  sublabel,
+  active,
+  ring,
+  avatar,
+  statusText,
+}: {
+  name: string;
+  sublabel: string;
+  active: boolean;
+  ring: "accent" | "green";
+  avatar: React.ReactNode;
+  statusText: string;
+}) {
+  const ringColor = ring === "accent" ? "ring-accent" : "ring-uber-green";
+  return (
+    <div
+      className={`relative flex aspect-[4/3] flex-col items-center justify-center rounded-xl bg-white/[0.04] ring-2 transition-all ${
+        active ? `${ringColor} ring-offset-2 ring-offset-[#0f1014]` : "ring-white/10"
+      }`}
+    >
+      <div className={active ? "animate-pulse" : ""}>{avatar}</div>
+      <p className="mt-3 text-sm font-semibold text-white">{name}</p>
+      <p className="text-xs text-white/50">{sublabel}</p>
+      <span className="absolute left-2 top-2 rounded-md bg-black/40 px-2 py-0.5 text-[11px] font-medium text-white/80">
+        {statusText}
+      </span>
+    </div>
+  );
+}
+
+function MicIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3m0 0h-3m3 0h3M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+      {muted && <path strokeLinecap="round" d="M3 3l18 18" />}
+    </svg>
+  );
+}
+
+function PhoneIcon({ hang }: { hang?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={`h-5 w-5 ${hang ? "rotate-[135deg]" : ""}`}>
+      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.18Z" />
+    </svg>
   );
 }

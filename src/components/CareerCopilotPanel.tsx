@@ -174,6 +174,7 @@ export function CareerCopilotPanel({
         onClose={() => setActive(null)}
         title={activeTool?.label ?? ""}
         subtitle={activeTool?.desc}
+        size={active === "interview" ? "xl" : "md"}
       >
         {error && (
           <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">

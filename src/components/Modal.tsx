@@ -7,10 +7,18 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   subtitle?: string;
+  size?: "md" | "xl";
   children: React.ReactNode;
 }
 
-export function Modal({ open, onClose, title, subtitle, children }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  size = "md",
+  children,
+}: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -33,7 +41,9 @@ export function Modal({ open, onClose, title, subtitle, children }: ModalProps) 
       role="presentation"
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+        className={`flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl ${
+          size === "xl" ? "max-w-5xl sm:min-h-[80vh]" : "max-w-2xl"
+        }`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

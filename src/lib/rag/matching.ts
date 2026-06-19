@@ -18,7 +18,11 @@ import {
   extractSkills,
 } from "./embeddings";
 import { clearAllResumes } from "./clear-resume";
-import { upsertJobVectors, searchSimilarJobs } from "../vector/astra";
+import {
+  upsertJobVectors,
+  searchSimilarJobs,
+  pruneJobVectors,
+} from "../vector/astra";
 
 interface MatchingOptions {
   useAi: boolean;
@@ -166,6 +170,11 @@ export async function matchResumeToJobs(
   });
 
   await upsertJobVectors(toIndex);
+  // Drop vectors for jobs that no longer exist (e.g. after a DB re-seed).
+  await pruneJobVectors(
+    allJobs.map((j) => j.id),
+    resumeVector.length
+  );
 
   // Retrieve candidates ranked by Astra vector similarity.
   const ranked = await searchSimilarJobs(resumeVector, allJobs.length);

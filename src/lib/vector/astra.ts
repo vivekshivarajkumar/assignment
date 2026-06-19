@@ -61,6 +61,16 @@ export async function upsertJobVectors(jobs: JobVector[]): Promise<void> {
   );
 }
 
+/** Remove vectors for jobs that no longer exist (e.g. after a re-seed). */
+export async function pruneJobVectors(
+  keepIds: string[],
+  dimension: number
+): Promise<void> {
+  if (keepIds.length === 0) return;
+  const collection = await ensureCollection(dimension);
+  await collection.deleteMany({ _id: { $nin: keepIds } });
+}
+
 /** Vector-search Astra for the jobs most similar to a query embedding. */
 export async function searchSimilarJobs(
   vector: number[],

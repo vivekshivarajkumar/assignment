@@ -1,6 +1,12 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import {
+  pgTable,
+  text,
+  integer,
+  doublePrecision,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
-export const resumes = sqliteTable("resumes", {
+export const resumes = pgTable("resumes", {
   id: text("id").primaryKey(),
   filename: text("filename").notNull(),
   content: text("content").notNull(),
@@ -9,12 +15,12 @@ export const resumes = sqliteTable("resumes", {
   skills: text("skills"),
   profileGraph: text("profile_graph"),
   embedding: text("embedding"),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
 });
 
-export const jobs = sqliteTable("jobs", {
+export const jobs = pgTable("jobs", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   company: text("company").notNull(),
@@ -27,12 +33,12 @@ export const jobs = sqliteTable("jobs", {
   source: text("source").default("seed"),
   structuredProfile: text("structured_profile"),
   embedding: text("embedding"),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
 });
 
-export const jobMatches = sqliteTable("job_matches", {
+export const jobMatches = pgTable("job_matches", {
   id: text("id").primaryKey(),
   resumeId: text("resume_id")
     .notNull()
@@ -40,14 +46,14 @@ export const jobMatches = sqliteTable("job_matches", {
   jobId: text("job_id")
     .notNull()
     .references(() => jobs.id, { onDelete: "cascade" }),
-  matchPercentage: real("match_percentage").notNull(),
+  matchPercentage: doublePrecision("match_percentage").notNull(),
   fitBreakdown: text("fit_breakdown"),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
 });
 
-export const tailoredResumes = sqliteTable("tailored_resumes", {
+export const tailoredResumes = pgTable("tailored_resumes", {
   id: text("id").primaryKey(),
   resumeId: text("resume_id")
     .notNull()
@@ -56,12 +62,12 @@ export const tailoredResumes = sqliteTable("tailored_resumes", {
     .notNull()
     .references(() => jobs.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
 });
 
-export const careerAssets = sqliteTable("career_assets", {
+export const careerAssets = pgTable("career_assets", {
   id: text("id").primaryKey(),
   resumeId: text("resume_id")
     .notNull()
@@ -71,12 +77,12 @@ export const careerAssets = sqliteTable("career_assets", {
     .references(() => jobs.id, { onDelete: "cascade" }),
   assetType: text("asset_type").notNull(),
   content: text("content").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
 });
 
-export const jobInsights = sqliteTable("job_insights", {
+export const jobInsights = pgTable("job_insights", {
   id: text("id").primaryKey(),
   jobId: text("job_id")
     .notNull()
@@ -86,7 +92,7 @@ export const jobInsights = sqliteTable("job_insights", {
   commonQuestions: text("common_questions"),
   payScale: text("pay_scale"),
   sources: text("sources"),
-  fetchedAt: integer("fetched_at", { mode: "timestamp" })
+  fetchedAt: timestamp("fetched_at")
     .notNull()
     .$defaultFn(() => new Date()),
 });

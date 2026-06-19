@@ -6,11 +6,15 @@ export async function parseResumeFile(
 
   if (ext === "pdf") {
     try {
-      const { PDFParse } = await import("pdf-parse");
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
-      await parser.destroy();
-      return result.text.trim();
+      // unpdf ships a serverless build of pdf.js — works on Vercel/Node, no worker file.
+      const { extractText, getDocumentProxy } = await import("unpdf");
+      const pdf = await getDocumentProxy(new Uint8Array(buffer));
+      const { text } = await extractText(pdf, { mergePages: true });
+      const out = (Array.isArray(text) ? text.join("\n") : text).trim();
+      if (!out) {
+        throw new Error("No extractable text (the PDF may be scanned/image-only).");
+      }
+      return out;
     } catch (err) {
       console.warn("PDF parse failed:", err);
       throw new Error(

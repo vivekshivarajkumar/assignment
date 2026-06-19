@@ -3,6 +3,9 @@ import { revalidatePath } from "next/cache";
 import { parseResumeFile, parseResumeText } from "@/lib/parse/resume";
 import { saveResume, matchResumeToJobs } from "@/lib/rag/matching";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 function guessMimeType(filename: string): string {
   const ext = filename.split(".").pop()?.toLowerCase();
   if (ext === "pdf") return "application/pdf";

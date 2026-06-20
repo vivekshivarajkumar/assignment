@@ -177,8 +177,8 @@ export function TailoredResumePanel(props: TailoredResumePanelProps) {
                 {loading ? "Regenerating…" : "Regenerate"}
               </button>
             </div>
-            <div className="max-h-[60vh] overflow-y-auto rounded-2xl bg-uber-gray-50 p-4">
-              <div className="space-y-1 rounded-md bg-white p-5 ring-1 ring-black/[0.06] sm:p-6">
+            <div className="max-h-[60vh] overflow-y-auto rounded-2xl bg-uber-gray-50 p-3 sm:p-5">
+              <div className="mx-auto max-w-[50rem] space-y-1 rounded bg-white px-6 py-7 ring-1 ring-black/[0.06] sm:px-10 sm:py-9">
                 {resumeMarkdownToElements(content)}
               </div>
             </div>

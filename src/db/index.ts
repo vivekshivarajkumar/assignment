@@ -5,21 +5,28 @@ import { seedJobsIfEmpty } from "./seed";
 
 const connectionString = process.env.DATABASE_URL;
 
-let sqlClient: ReturnType<typeof postgres> | null = null;
-let dbInstance: ReturnType<typeof drizzle<typeof schema>> | null = null;
-let initPromise: Promise<void> | null = null;
+type SqlClient = ReturnType<typeof postgres>;
+type DbInstance = ReturnType<typeof drizzle<typeof schema>>;
+
+const globalForDb = globalThis as typeof globalThis & {
+  careerCrafterSqlClient?: SqlClient;
+  careerCrafterDbInstance?: DbInstance;
+  careerCrafterInitPromise?: Promise<void> | null;
+};
 
 function getClient() {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set. Configure your Postgres connection.");
   }
-  if (!sqlClient) {
-    sqlClient = postgres(connectionString, {
+  if (!globalForDb.careerCrafterSqlClient) {
+    globalForDb.careerCrafterSqlClient = postgres(connectionString, {
       ssl: "require",
-      max: 5,
+      max: 1,
+      idle_timeout: 20,
+      connect_timeout: 15,
     });
   }
-  return sqlClient;
+  return globalForDb.careerCrafterSqlClient;
 }
 
 async function ensureSchema(): Promise<void> {
@@ -96,22 +103,22 @@ async function ensureSchema(): Promise<void> {
 
 /** Ensure schema + seed run exactly once. */
 export function initDb(): Promise<void> {
-  if (!initPromise) {
-    initPromise = (async () => {
+  if (!globalForDb.careerCrafterInitPromise) {
+    globalForDb.careerCrafterInitPromise = (async () => {
       await ensureSchema();
       await seedJobsIfEmpty(getDb());
     })().catch((err) => {
-      initPromise = null; // allow retry on next call
+      globalForDb.careerCrafterInitPromise = null; // allow retry on next call
       throw err;
     });
   }
-  return initPromise;
+  return globalForDb.careerCrafterInitPromise;
 }
 
 export function getDb() {
-  if (!dbInstance) {
-    dbInstance = drizzle(getClient(), { schema });
+  if (!globalForDb.careerCrafterDbInstance) {
+    globalForDb.careerCrafterDbInstance = drizzle(getClient(), { schema });
     void initDb().catch((err) => console.error("DB init failed:", err));
   }
-  return dbInstance;
+  return globalForDb.careerCrafterDbInstance;
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconDocument } from "./icons";
+import { IconBriefcase, IconDocument } from "./icons";
 import { ResumePreview } from "./ResumePreview";
 
 interface ResumeUploadProps {
@@ -19,7 +19,9 @@ export function ResumeUpload({ initialResume = null }: ResumeUploadProps) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
+  const [searchSummary, setSearchSummary] = useState("");
   const [uploaded, setUploaded] = useState<{
     id: string | null;
     filename: string;
@@ -60,14 +62,9 @@ export function ResumeUpload({ initialResume = null }: ResumeUploadProps) {
       });
       setText("");
       setShowForm(false);
+      setSearchSummary("Resume uploaded. Run a personalized job search when ready.");
 
       router.refresh();
-
-      requestAnimationFrame(() => {
-        document
-          .getElementById("your-matches")
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -98,6 +95,7 @@ export function ResumeUpload({ initialResume = null }: ResumeUploadProps) {
   async function handleReplace() {
     setLoading(true);
     setError("");
+    setSearchSummary("");
     try {
       const res = await fetch("/api/resume", { method: "DELETE" });
       if (!res.ok) {
@@ -115,6 +113,33 @@ export function ResumeUpload({ initialResume = null }: ResumeUploadProps) {
     }
   }
 
+  async function handleSearchJobs() {
+    setSearching(true);
+    setError("");
+    setSearchSummary("");
+    try {
+      const res = await fetch("/api/jobs/search", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Job search failed");
+
+      const inserted = data.discovery?.inserted ?? 0;
+      const matchCount = data.matchCount ?? 0;
+      setSearchSummary(
+        `Found ${matchCount} personalized matches from ${inserted} new job postings.`
+      );
+      router.refresh();
+      requestAnimationFrame(() => {
+        document
+          .getElementById("your-matches")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Job search failed");
+    } finally {
+      setSearching(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {uploaded && (
@@ -128,14 +153,25 @@ export function ResumeUpload({ initialResume = null }: ResumeUploadProps) {
       )}
 
       {uploaded && !showForm && (
-        <button
-          type="button"
-          onClick={handleReplace}
-          disabled={loading}
-          className="uber-btn-ghost text-sm underline disabled:opacity-40"
-        >
-          Replace resume
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSearchJobs}
+            disabled={loading || searching}
+            className="uber-btn-accent inline-flex items-center gap-2 !px-4 !py-2 text-sm disabled:bg-uber-gray-100 disabled:text-uber-gray-400 disabled:shadow-none"
+          >
+            <IconBriefcase className="h-4 w-4" />
+            {searching ? "Searching jobs..." : "Search relevant jobs"}
+          </button>
+          <button
+            type="button"
+            onClick={handleReplace}
+            disabled={loading || searching}
+            className="uber-btn-ghost text-sm underline disabled:opacity-40"
+          >
+            Replace resume
+          </button>
+        </div>
       )}
 
       {showForm && (
@@ -186,7 +222,7 @@ export function ResumeUpload({ initialResume = null }: ResumeUploadProps) {
               disabled={loading || text.length < 50}
               className="uber-btn-accent w-full !py-3 text-sm disabled:bg-uber-gray-100 disabled:text-uber-gray-400 disabled:shadow-none"
             >
-              {loading ? "Matching jobs…" : "Upload & match jobs"}
+              {loading ? "Uploading resume..." : "Upload resume"}
             </button>
           </form>
         </>
@@ -194,7 +230,19 @@ export function ResumeUpload({ initialResume = null }: ResumeUploadProps) {
 
       {loading && (
         <p className="text-center text-sm text-uber-gray-500">
-          Parsing resume and scoring against all jobs…
+          Building your personalized profile...
+        </p>
+      )}
+
+      {searching && (
+        <p className="text-center text-sm text-uber-gray-500">
+          Searching India-based roles and scoring personalized matches...
+        </p>
+      )}
+
+      {searchSummary && (
+        <p className="rounded-lg bg-uber-green-light px-4 py-3 text-sm font-medium text-uber-green">
+          {searchSummary}
         </p>
       )}
 

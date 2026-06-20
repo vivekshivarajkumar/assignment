@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/db";
-import * as schema from "@/db/schema";
-import { desc } from "drizzle-orm";
 import {
   getLatestResume,
   getMatchesForResume,
+  getHomePageJobs,
 } from "@/lib/rag/matching";
 
 export async function GET() {
   try {
-    const db = getDb();
-    const jobs = await db.select().from(schema.jobs).orderBy(desc(schema.jobs.createdAt));
     const resume = await getLatestResume();
+    const { jobs } = await getHomePageJobs();
 
     let matches: Awaited<ReturnType<typeof getMatchesForResume>> = [];
     if (resume) {

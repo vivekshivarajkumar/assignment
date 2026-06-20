@@ -10,6 +10,26 @@ const STOP_WORDS = new Set([
   "they", "my", "your", "our", "their", "as", "if", "then", "than",
 ]);
 
+export const KNOWN_SKILLS = [
+  "javascript", "typescript", "python", "java", "go", "golang", "rust",
+  "react", "next.js", "nextjs", "node.js", "nodejs", "vue", "angular",
+  "sql", "postgresql", "mysql", "mongodb", "redis", "sqlite",
+  "aws", "gcp", "azure", "docker", "kubernetes", "terraform",
+  "machine learning", "deep learning", "data science", "data analysis",
+  "data analytics", "analytics", "pandas", "numpy", "scikit-learn",
+  "sklearn", "pytorch", "tensorflow", "keras", "nlp", "computer vision",
+  "statistics", "statistical modeling", "regression", "classification",
+  "clustering", "time series", "forecasting", "predictive modeling",
+  "ab testing", "a/b testing", "hypothesis testing", "feature engineering",
+  "model evaluation", "mlops", "rag", "llm", "openai", "gemini",
+  "tableau", "power bi", "looker", "excel", "spark", "airflow", "dbt",
+  "snowflake", "databricks", "hadoop", "hive", "kafka",
+  "git", "ci/cd", "agile", "scrum", "html", "css", "tailwind",
+  "graphql", "rest", "api", "jenkins", "sonarqube", "groovy", "netlify",
+  "ruby", "rails", "php", "c++", "c#", "product analytics",
+  "business intelligence", "etl", "data visualization",
+];
+
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
@@ -93,17 +113,60 @@ export function serializeEmbedding(embedding: number[]): string {
 }
 
 export function extractSkills(text: string): string[] {
-  const known = [
-    "javascript", "typescript", "python", "java", "go", "golang", "rust",
-    "react", "next.js", "nextjs", "node.js", "nodejs", "vue", "angular",
-    "sql", "postgresql", "mysql", "mongodb", "redis", "sqlite",
-    "aws", "gcp", "azure", "docker", "kubernetes", "terraform",
-    "machine learning", "deep learning", "pytorch", "tensorflow", "nlp",
-    "rag", "llm", "openai", "git", "ci/cd", "agile", "scrum",
-    "html", "css", "tailwind", "graphql", "rest", "api",
-    "jenkins", "sonarqube", "groovy", "netlify",
-    "spark", "airflow", "kafka", "ruby", "rails", "php", "c++", "c#",
-  ];
   const lower = text.toLowerCase();
-  return known.filter((skill) => lower.includes(skill));
+  return KNOWN_SKILLS.filter((skill) => lower.includes(skill));
+}
+
+export function extractResumeSearchKeywords(
+  text: string,
+  skills = extractSkills(text)
+): string[] {
+  const lower = text.toLowerCase();
+  const roleSignals = [
+    "data scientist",
+    "machine learning engineer",
+    "data analyst",
+    "data engineer",
+    "analytics engineer",
+    "business intelligence analyst",
+    "ai engineer",
+    "ml engineer",
+    "product analyst",
+    "research scientist",
+    "frontend engineer",
+    "backend engineer",
+    "full stack engineer",
+    "devops engineer",
+    "platform engineer",
+    "product manager",
+  ].filter((role) => lower.includes(role));
+
+  const dataScienceSignals = [
+    "python",
+    "sql",
+    "machine learning",
+    "data science",
+    "statistics",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "sklearn",
+    "tensorflow",
+    "pytorch",
+    "tableau",
+    "power bi",
+    "spark",
+    "airflow",
+    "predictive modeling",
+    "analytics",
+  ].filter((skill) => skills.includes(skill));
+
+  const inferredRoles =
+    dataScienceSignals.length >= 3
+      ? ["data scientist", "machine learning engineer", "data analyst"]
+      : [];
+
+  return [...new Set([...roleSignals, ...inferredRoles, ...skills])]
+    .filter((keyword) => keyword.length > 1)
+    .slice(0, 12);
 }

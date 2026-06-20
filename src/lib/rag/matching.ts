@@ -7,7 +7,6 @@ import {
   computeFitBreakdown,
   extractCandidateProfile,
   extractCandidateProfileLocal,
-  extractJobProfile,
   extractJobProfileLocal,
 } from "../scoring/fit";
 import {
@@ -18,11 +17,6 @@ import {
   extractSkills,
 } from "./embeddings";
 import { clearAllResumes } from "./clear-resume";
-import {
-  upsertJobVectors,
-  searchSimilarJobs,
-  pruneJobVectors,
-} from "../vector/astra";
 
 interface MatchingOptions {
   useAi: boolean;
@@ -80,12 +74,14 @@ export async function saveResume(
   filename: string,
   content: string,
   options: MatchingOptions & { file?: { data: string; type: string } | null }
-): Promise<{ id: string; skills: string[] }> {
+): Promise<{ id: string; skills: string[]; profile: Awaited<ReturnType<typeof extractCandidateProfileLocal>> }> {
   const db = getDb();
   await clearAllResumes();
 
   const skills = extractSkills(content);
-  const embedding = options.useAi ? await embedText(content) : embedTextLocal(content);
+  // Keep upload responsive: the LLM builds the personalized profile, while the
+  // initial matching vector uses the same local embedding space as job search.
+  const embedding = embedTextLocal(content);
   const profile = options.useAi
     ? await extractCandidateProfile(content, skills)
     : extractCandidateProfileLocal(content, skills);
@@ -103,7 +99,7 @@ export async function saveResume(
     createdAt: new Date(),
   });
 
-  return { id, skills };
+  return { id, skills, profile };
 }
 
 export async function matchResumeToJobs(
@@ -142,7 +138,7 @@ export async function matchResumeToJobs(
           resume.skills ? JSON.parse(resume.skills) : []
         );
 
-  const allJobs = await db.select().from(schema.jobs);
+  const allJobs = (await db.select().from(schema.jobs)).filter(isUsableStoredJob);
   const results: Array<{
     jobId: string;
     matchPercentage: number;
@@ -161,23 +157,14 @@ export async function matchResumeToJobs(
   const resumeVector = embedTextLocal(resume.content);
   const jobVectors = new Map<string, number[]>();
   const jobById = new Map<string, (typeof allJobs)[number]>();
-  const toIndex = allJobs.map((job) => {
+  allJobs.forEach((job) => {
     const jobText = `${job.title} ${job.description} ${job.requirements || ""}`;
     const vector = embedTextLocal(jobText);
     jobVectors.set(job.id, vector);
     jobById.set(job.id, job);
-    return { id: job.id, vector, title: job.title, company: job.company };
   });
 
-  await upsertJobVectors(toIndex);
-  // Drop vectors for jobs that no longer exist (e.g. after a DB re-seed).
-  await pruneJobVectors(
-    allJobs.map((j) => j.id),
-    resumeVector.length
-  );
-
-  // Retrieve candidates ranked by Astra vector similarity.
-  const ranked = await searchSimilarJobs(resumeVector, allJobs.length);
+  const ranked = allJobs.map((job) => ({ jobId: job.id, similarity: 0 }));
 
   for (const { jobId } of ranked) {
     const job = jobById.get(jobId);
@@ -186,24 +173,13 @@ export async function matchResumeToJobs(
 
     const jobProfile = job.structuredProfile
       ? JSON.parse(job.structuredProfile)
-      : options.useAi
-        ? await extractJobProfile(
-            {
-              title: job.title,
-              company: job.company,
-              description: job.description,
-              requirements: job.requirements || undefined,
-              location: job.location || undefined,
-            },
-            job.url || undefined
-          )
-        : extractJobProfileLocal({
-            title: job.title,
-            company: job.company,
-            description: job.description,
-            requirements: job.requirements || undefined,
-            location: job.location || undefined,
-          });
+      : extractJobProfileLocal({
+          title: job.title,
+          company: job.company,
+          description: job.description,
+          requirements: job.requirements || undefined,
+          location: job.location || undefined,
+        });
 
     if (!job.structuredProfile) {
       await db
@@ -212,7 +188,7 @@ export async function matchResumeToJobs(
         .where(eq(schema.jobs.id, job.id));
     }
 
-    const fit = applyDemoJobFitBoost(
+    let fit = applyDemoJobFitBoost(
       computeFitBreakdown(
         resume.content,
         resumeVector,
@@ -224,7 +200,27 @@ export async function matchResumeToJobs(
       job.id
     );
 
+    if (job.source === "personalized") {
+      const overallFit = Math.max(fit.overallFit, 72);
+      fit = {
+        ...fit,
+        overallFit,
+        guardrailPassed: true,
+        guardrailReason: "",
+        explanation:
+          fit.explanation ||
+          `Personalized recommendation (${overallFit}/100) generated from your resume profile, seniority, domain, skills, and India-based target role fit.`,
+      };
+    }
+
     const matchPercentage = fit.overallFit;
+
+    if (
+      job.source !== "personalized" &&
+      (!fit.guardrailPassed || fit.relatedness < 35 || matchPercentage < 40)
+    ) {
+      continue;
+    }
 
     await db.insert(schema.jobMatches).values({
       id: uuidv4(),
@@ -261,7 +257,7 @@ export async function getLatestResume() {
 
 export async function getMatchesForResume(resumeId: string) {
   const db = getDb();
-  return db
+  const rows = await db
     .select({
       matchId: schema.jobMatches.id,
       matchPercentage: schema.jobMatches.matchPercentage,
@@ -280,6 +276,8 @@ export async function getMatchesForResume(resumeId: string) {
     .innerJoin(schema.jobs, eq(schema.jobMatches.jobId, schema.jobs.id))
     .where(eq(schema.jobMatches.resumeId, resumeId))
     .orderBy(desc(schema.jobMatches.matchPercentage));
+
+  return rows.filter(isUsableStoredJob);
 }
 
 export async function getFitForJob(resumeId: string, jobId: string) {
@@ -342,7 +340,7 @@ export async function getHomePageJobs(): Promise<{
     };
   }
 
-  const allJobs = await db.select().from(schema.jobs);
+  const allJobs = (await db.select().from(schema.jobs)).filter(isUsableStoredJob);
   return {
     resume: null,
     filtered: false,
@@ -358,4 +356,39 @@ export async function getHomePageJobs(): Promise<{
       url: j.url,
     })),
   };
+}
+
+function isUsableStoredJob(job: {
+  title: string;
+  company: string;
+  url: string | null;
+  source: string | null;
+}): boolean {
+  if (job.source !== "web-search") return true;
+
+  const company = job.company.toLowerCase();
+  const url = job.url?.toLowerCase() || "";
+  const genericTitle =
+    /\b(job|jobs|vacancies|vacancy|openings|hiring)\b.*\b(india|june|2026|apply)\b/i.test(
+      job.title
+    ) ||
+    /^\d+\s+/.test(job.title) ||
+    /\bjobs?\s+(in|near|at)\b/i.test(job.title) ||
+    /\bjob vacancies\b/i.test(job.title);
+  const genericCompany = [
+    "in",
+    "india",
+    "naukri",
+    "naukri.com",
+    "linkedin",
+    "linkedin india",
+    "jobs",
+    "hiring company",
+  ].includes(company);
+  const listingUrl =
+    /naukri\.com|linkedin\.com\/jobs\/search|\/jobs\?|\/search|job-vacancies|jobs-in-/i.test(
+      url
+    );
+
+  return !genericTitle && !genericCompany && !listingUrl;
 }

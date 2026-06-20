@@ -146,7 +146,11 @@ export default async function HomePage() {
           </div>
 
           {jobs.length === 0 ? (
-            <p className="text-sm text-uber-gray-500">No jobs yet.</p>
+            <p className="text-sm text-uber-gray-500">
+              {filtered
+                ? "No matches yet. Click Search relevant jobs above to discover and rank India-based roles for this resume."
+                : "No jobs yet."}
+            </p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {jobs.map((job) => (

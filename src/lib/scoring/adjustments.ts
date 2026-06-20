@@ -8,8 +8,17 @@ export function applyDemoJobFitBoost(
 ): FitBreakdown {
   if (jobId !== DEMO_MATCH_JOB_ID) return fit;
 
+  const hasFrontendEvidence = /react|frontend|javascript|typescript|html|css/i.test(
+    resumeContent
+  );
+  const hasDevopsEvidence =
+    /jenkins|kubernetes|terraform|ci\/cd|devops/i.test(resumeContent);
+  const isDataScienceProfile =
+    /data scientist|data science|machine learning|analytics|pandas|numpy|statistics|tableau|power bi/i.test(
+      resumeContent
+    );
   const hasDevopsProfile =
-    /react|jenkins|kubernetes|docker|javascript/i.test(resumeContent);
+    hasFrontendEvidence && hasDevopsEvidence && !isDataScienceProfile;
   if (!hasDevopsProfile) return fit;
 
   const relatedness = Math.max(fit.relatedness, 85);

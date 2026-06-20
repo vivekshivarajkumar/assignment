@@ -1,4 +1,4 @@
-import { cosineSimilarity } from "../rag/embeddings";
+import { cosineSimilarity, KNOWN_SKILLS } from "../rag/embeddings";
 import { chatJSON, hasAI } from "../ai/chat";
 import type {
   CandidateProfileGraph,
@@ -69,7 +69,7 @@ export function computeFitBreakdown(
     const embeddingScore = Math.round(
       Math.max(0, cosineSimilarity(resumeEmbedding, jobEmbedding)) * 100
     );
-    relatedness = Math.max(embeddingScore, textScore);
+    relatedness = Math.round(textScore * 0.75 + embeddingScore * 0.25);
   }
 
   const mustHaveCoverage = coverageScore(
@@ -254,17 +254,23 @@ function buildFallbackJobProfile(raw: {
 }): StructuredJobProfile {
   const text = `${raw.description} ${raw.requirements || ""}`;
   const skills = text
-    .match(/\b(?:JavaScript|TypeScript|Python|React|Node|AWS|SQL|Java|Go|Kubernetes|Docker|ML|AI|LLM|RAG)\b/gi)
+    .match(/\b(?:JavaScript|TypeScript|Python|React|Node|AWS|SQL|Java|Go|Kubernetes|Docker|ML|AI|LLM|RAG|Data Science|Analytics|Pandas|NumPy|Scikit-learn|TensorFlow|PyTorch|Tableau|Power BI|Statistics|Regression|Classification|Clustering|Spark|Airflow|ETL|MLOps)\b/gi)
     ?.map((s) => s.toLowerCase()) ?? [];
 
   return {
     title: raw.title,
     company: raw.company,
-    seniority: /senior|sr/i.test(raw.title)
-      ? "senior"
-      : /junior|entry|associate/i.test(raw.title)
-        ? "entry"
-        : "mid",
+    seniority: /chief|cxo|vp|vice president|executive/i.test(raw.title)
+      ? "executive"
+      : /director|head of|head\b/i.test(raw.title)
+        ? "director"
+        : /principal|staff/i.test(raw.title)
+          ? "staff"
+          : /lead|senior|sr/i.test(raw.title)
+            ? "senior"
+            : /junior|entry|associate/i.test(raw.title)
+              ? "entry"
+              : "mid",
     domain: "technology",
     responsibilities: raw.description.split(/[.!]\s+/).slice(0, 5),
     mustHaveSkills: [...new Set(skills)].slice(0, 8),
@@ -299,7 +305,29 @@ export async function extractCandidateProfile(
       `You parse resumes into candidate profile graphs. Only include evidence present in the resume. Return valid JSON.`,
       `Parse this resume:\n${content.slice(0, 5000)}
 
-Return JSON with: seniorityLevel, yearsExperience, domains[], skills[], tools[], achievements[], leadershipMarkers[], strongestEvidence[], gaps[], candidateType (executive|mid_senior_manager|senior_ic|early_career|career_switcher|domain_specialist)`
+Return JSON with:
+{
+  "seniorityLevel": "intern|entry|mid|senior|staff|principal|director|executive",
+  "yearsExperience": number or null,
+  "domains": ["business/domain areas such as data science, analytics, fintech, healthcare"],
+  "skills": ["resume-backed skills only"],
+  "tools": ["resume-backed tools/platforms only"],
+  "roleTypes": ["data science|analytics|machine learning|data engineering|software engineering|product|management etc"],
+  "targetRoles": ["credible role titles this person is best aligned to now"],
+  "industries": ["industries mentioned or strongly evidenced"],
+  "locations": ["locations mentioned or India if India is implied"],
+  "education": ["degrees or institutions mentioned"],
+  "certifications": ["certifications mentioned"],
+  "responsibilities": ["main work responsibilities from experience"],
+  "senioritySignals": ["signals such as led team, owned roadmap, built model, managed stakeholders"],
+  "domainEvidence": ["short evidence snippets proving domain fit"],
+  "profileKeywords": ["high-signal keywords for personalized job search"],
+  "achievements": ["quantified or concrete achievements"],
+  "leadershipMarkers": ["leadership evidence"],
+  "strongestEvidence": ["best 3-5 evidence snippets"],
+  "gaps": [],
+  "candidateType": "executive|mid_senior_manager|senior_ic|early_career|career_switcher|domain_specialist"
+}`
     );
     return { ...fallback, ...result, skills: result.skills?.length ? result.skills : skills };
   } catch {
@@ -317,8 +345,18 @@ export function extractCandidateProfileLocal(
     domains: inferDomains(content),
     skills,
     tools: skills.filter((s) =>
-      /react|node|python|aws|docker|sql|java|go/i.test(s)
+      /react|node|python|aws|docker|sql|java|go|pandas|numpy|tableau|power bi|spark|airflow|tensorflow|pytorch|scikit/i.test(s)
     ),
+    roleTypes: inferRoleTypes(content, skills),
+    targetRoles: inferTargetRoles(content, skills),
+    industries: inferIndustries(content),
+    locations: inferLocations(content),
+    education: extractEducation(content),
+    certifications: extractCertifications(content),
+    responsibilities: extractBullets(content).slice(0, 6),
+    senioritySignals: extractSenioritySignals(content),
+    domainEvidence: extractDomainEvidence(content),
+    profileKeywords: [...new Set([...inferTargetRoles(content, skills), ...skills, ...inferDomains(content)])].slice(0, 14),
     achievements: extractBullets(content).slice(0, 5),
     leadershipMarkers: /lead|manage|mentor|team/i.test(content)
       ? ["team leadership mentioned"]
@@ -343,11 +381,123 @@ function inferYears(text: string): number | null {
 
 function inferDomains(text: string): string[] {
   const domains: string[] = [];
+  if (/data science|machine learning|analytics|statistic|predictive|model/i.test(text)) {
+    domains.push("data science");
+  }
   if (/fintech|finance|bank/i.test(text)) domains.push("fintech");
   if (/health|medical|pharma/i.test(text)) domains.push("healthcare");
   if (/e-?commerce|retail/i.test(text)) domains.push("e-commerce");
   if (domains.length === 0) domains.push("technology");
   return domains;
+}
+
+function inferRoleTypes(text: string, skills: string[]): string[] {
+  const roles: string[] = [];
+  const lower = text.toLowerCase();
+  const hasDataScience =
+    /data scientist|machine learning|data analysis|analytics|statistic|predictive/i.test(text) ||
+    skills.some((s) =>
+      /python|sql|pandas|numpy|scikit|tensorflow|pytorch|tableau|power bi|spark|airflow|analytics|machine learning|data science/.test(s)
+    );
+  if (hasDataScience) roles.push("data science", "analytics", "machine learning");
+  if (/data engineer|etl|warehouse|spark|airflow|dbt|snowflake|databricks/i.test(text)) {
+    roles.push("data engineering");
+  }
+  if (/frontend|react|javascript|typescript|next\.?js/i.test(lower)) roles.push("frontend");
+  if (/backend|api|node|java|go|distributed/i.test(lower)) roles.push("backend");
+  if (/devops|kubernetes|docker|terraform|jenkins|ci\/cd/i.test(lower)) roles.push("devops");
+  if (/product manager|roadmap|user research|stakeholder/i.test(lower)) roles.push("product");
+  return [...new Set(roles.length ? roles : ["technology"])];
+}
+
+function inferTargetRoles(text: string, skills: string[]): string[] {
+  const roles: string[] = [];
+  const lower = text.toLowerCase();
+  if (/data scientist/i.test(lower)) roles.push("Data Scientist");
+  if (/machine learning|ml engineer/i.test(lower)) roles.push("Machine Learning Engineer");
+  if (/data analyst|analytics/i.test(lower)) roles.push("Data Analyst");
+  if (/data engineer|etl|spark|airflow/i.test(lower)) roles.push("Data Engineer");
+
+  const dataSkillCount = skills.filter((skill) =>
+    /python|sql|pandas|numpy|scikit|tensorflow|pytorch|statistics|analytics|machine learning|data science|tableau|power bi|spark|airflow/.test(skill)
+  ).length;
+  if (dataSkillCount >= 3) {
+    roles.push("Data Scientist", "Machine Learning Engineer", "Data Analyst");
+  }
+  if (/frontend|react/i.test(lower)) roles.push("Frontend Engineer");
+  if (/backend|api/i.test(lower)) roles.push("Backend Engineer");
+  if (/devops|kubernetes|terraform|jenkins/i.test(lower)) roles.push("DevOps Engineer");
+
+  return [...new Set(roles)].slice(0, 6);
+}
+
+function inferIndustries(text: string): string[] {
+  const industries: string[] = [];
+  if (/fintech|bank|payment|lending|finance/i.test(text)) industries.push("fintech");
+  if (/health|medical|pharma|clinical/i.test(text)) industries.push("healthcare");
+  if (/retail|e-?commerce|consumer/i.test(text)) industries.push("retail/e-commerce");
+  if (/saas|b2b|enterprise/i.test(text)) industries.push("saas");
+  if (/education|edtech/i.test(text)) industries.push("edtech");
+  return industries;
+}
+
+function inferLocations(text: string): string[] {
+  const locations = [
+    "India",
+    "Bengaluru",
+    "Bangalore",
+    "Hyderabad",
+    "Pune",
+    "Mumbai",
+    "Delhi",
+    "Gurugram",
+    "Gurgaon",
+    "Noida",
+    "Chennai",
+  ];
+  const hits = locations.filter((loc) => new RegExp(loc, "i").test(text));
+  return hits.length ? [...new Set(hits)] : ["India"];
+}
+
+function extractEducation(text: string): string[] {
+  return text
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter((line) => /b\.?tech|m\.?tech|mba|bachelor|master|phd|university|college|institute/i.test(line))
+    .slice(0, 5);
+}
+
+function extractCertifications(text: string): string[] {
+  return text
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter((line) => /certified|certification|certificate|aws|azure|google cloud|coursera|udemy|professional certificate/i.test(line))
+    .slice(0, 5);
+}
+
+function extractSenioritySignals(text: string): string[] {
+  const signals: string[] = [];
+  if (/lead|managed|mentor|stakeholder|owned|strategy|roadmap/i.test(text)) {
+    signals.push("leadership or ownership mentioned");
+  }
+  if (/architect|designed|built|deployed|production/i.test(text)) {
+    signals.push("system/project ownership mentioned");
+  }
+  if (/\d+%|\d+x|\$\d+|\d+\s*(users|customers|models|dashboards|pipelines)/i.test(text)) {
+    signals.push("measurable impact mentioned");
+  }
+  return signals;
+}
+
+function extractDomainEvidence(text: string): string[] {
+  const keywords = KNOWN_SKILLS.filter((skill) =>
+    text.toLowerCase().includes(skill.toLowerCase())
+  );
+  return extractBullets(text)
+    .filter((line) =>
+      keywords.some((skill) => line.toLowerCase().includes(skill.toLowerCase()))
+    )
+    .slice(0, 5);
 }
 
 function inferCandidateType(text: string): CandidateProfileGraph["candidateType"] {

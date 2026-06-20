@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { parseResumeFile, parseResumeText } from "@/lib/parse/resume";
-import { saveResume, matchResumeToJobs } from "@/lib/rag/matching";
+import { matchResumeToJobs, saveResume } from "@/lib/rag/matching";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,12 +52,11 @@ export async function POST(req: NextRequest) {
       content = await parseResumeText(body.text);
     }
 
-    const { id, skills } = await saveResume(filename, content, {
-      useAi: false,
+    const { id, skills, profile } = await saveResume(filename, content, {
+      useAi: true,
       file: originalFile,
     });
-    const matches = await matchResumeToJobs(id, { useAi: false });
-
+    const matches = await matchResumeToJobs(id, { useAi: true });
     revalidatePath("/");
 
     return NextResponse.json({
@@ -66,6 +65,7 @@ export async function POST(req: NextRequest) {
       content,
       fileType: originalFile?.type ?? null,
       skills,
+      profile,
       matchCount: matches.length,
       topMatches: matches.slice(0, 5),
     });

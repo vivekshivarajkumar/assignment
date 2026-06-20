@@ -30,14 +30,21 @@ export async function POST(
 
     const resume = await getLatestResume();
     const resumeExcerpt = resume?.content.slice(0, 2000) || "No resume uploaded";
+    const candidateProfile = resume?.profileGraph
+      ? safeJson<Record<string, unknown>>(resume.profileGraph)
+      : null;
+    const profileBlock = candidateProfile
+      ? JSON.stringify(candidateProfile, null, 2).slice(0, 2500)
+      : "No structured profile available.";
 
     if (!answer) {
       const firstQuestion = hasAI()
         ? await chatComplete(
-            `You conduct adaptive mock interviews. Return only the interview question, no preamble.`,
+            `You conduct adaptive mock interviews. Every question must be personalized to the candidate's resume, profile, domain, role type, seniority, and target job. Return only the interview question, no preamble.`,
             `Role: ${job.title} at ${job.company}
-Candidate background: ${resumeExcerpt}
-Ask the first interview question appropriate for this role and seniority.`
+Candidate structured profile: ${profileBlock}
+Candidate resume evidence: ${resumeExcerpt}
+Ask the first interview question appropriate for this exact candidate, role, domain, and seniority.`
           )
         : `Tell me about your experience relevant to the ${job.title} role at ${job.company}.`;
 
@@ -50,8 +57,10 @@ Ask the first interview question appropriate for this role and seniority.`
 
     const feedback = hasAI()
       ? await chatComplete(
-          `You are an empathetic interview coach. Give constructive feedback on content, structure, tone, and confidence. Then ask one follow-up question. Format: ## Feedback\n...\n\n## Next Question\n...`,
+          `You are an empathetic interview coach. Give constructive feedback on content, structure, tone, confidence, seniority fit, and evidence strength. Personalize feedback to the candidate profile and target role. Then ask one follow-up question. Format: ## Feedback\n...\n\n## Next Question\n...`,
           `Role: ${job.title}
+Candidate structured profile: ${profileBlock}
+Candidate resume evidence: ${resumeExcerpt}
 Question ${questionIndex + 1} answered: ${history[history.length - 1]?.content || ""}
 Candidate answer: ${answer}`,
           { temperature: 0.4 }
@@ -72,5 +81,13 @@ Candidate answer: ${answer}`,
   } catch (err) {
     const message = err instanceof Error ? err.message : "Interview failed";
     return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+function safeJson<T>(value: string): T | null {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
   }
 }

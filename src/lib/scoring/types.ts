@@ -19,6 +19,16 @@ export interface CandidateProfileGraph {
   domains: string[];
   skills: string[];
   tools: string[];
+  roleTypes?: string[];
+  targetRoles?: string[];
+  industries?: string[];
+  locations?: string[];
+  education?: string[];
+  certifications?: string[];
+  responsibilities?: string[];
+  senioritySignals?: string[];
+  domainEvidence?: string[];
+  profileKeywords?: string[];
   achievements: string[];
   leadershipMarkers: string[];
   strongestEvidence: string[];

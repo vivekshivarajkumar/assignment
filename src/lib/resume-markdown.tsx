@@ -30,12 +30,12 @@ export function resumeMarkdownToElements(content: string): React.ReactNode[] {
     const trimmed = line.trim();
 
     if (!trimmed) {
-      elements.push(<div key={index} className="h-2" />);
+      elements.push(<div key={index} className="h-1.5" />);
       return;
     }
 
     if (trimmed === "---" || trimmed === "***") {
-      elements.push(<hr key={index} className="my-4 border-uber-gray-200" />);
+      elements.push(<hr key={index} className="my-3 border-uber-gray-200" />);
       return;
     }
 
@@ -43,7 +43,7 @@ export function resumeMarkdownToElements(content: string): React.ReactNode[] {
       elements.push(
         <h4
           key={index}
-          className="mt-4 text-sm font-semibold uppercase tracking-wide text-uber-black"
+          className="mt-3 text-[13px] font-semibold text-uber-black"
         >
           {renderInline(trimmed.slice(4))}
         </h4>
@@ -53,7 +53,10 @@ export function resumeMarkdownToElements(content: string): React.ReactNode[] {
 
     if (trimmed.startsWith("## ")) {
       elements.push(
-        <h3 key={index} className="mt-5 text-base font-semibold text-uber-black">
+        <h3
+          key={index}
+          className="mt-5 border-b border-uber-gray-200 pb-1 text-[13px] font-bold uppercase text-uber-black"
+        >
           {renderInline(trimmed.slice(3))}
         </h3>
       );
@@ -62,7 +65,10 @@ export function resumeMarkdownToElements(content: string): React.ReactNode[] {
 
     if (trimmed.startsWith("# ")) {
       elements.push(
-        <h2 key={index} className="text-lg font-bold text-uber-black">
+        <h2
+          key={index}
+          className="text-center text-xl font-bold leading-tight text-uber-black"
+        >
           {renderInline(trimmed.slice(2))}
         </h2>
       );
@@ -73,7 +79,7 @@ export function resumeMarkdownToElements(content: string): React.ReactNode[] {
       elements.push(
         <li
           key={index}
-          className="ml-4 list-disc text-sm leading-relaxed text-uber-gray-600"
+          className="ml-5 list-disc text-[13px] leading-6 text-uber-gray-700"
         >
           {renderInline(trimmed.slice(2))}
         </li>
@@ -82,7 +88,12 @@ export function resumeMarkdownToElements(content: string): React.ReactNode[] {
     }
 
     elements.push(
-      <p key={index} className="text-sm leading-relaxed text-uber-gray-600">
+      <p
+        key={index}
+        className={`text-[13px] leading-6 text-uber-gray-700 ${
+          index <= 2 ? "text-center" : ""
+        }`}
+      >
         {renderInline(trimmed)}
       </p>
     );

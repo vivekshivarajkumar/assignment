@@ -4,9 +4,9 @@ import { v4 as uuidv4 } from "uuid";
 import { getDb } from "@/db";
 import * as schema from "@/db/schema";
 import { fetchJobFromUrl, validateJobUrl } from "@/lib/parse/job-url";
-import { embedTextLocal, serializeEmbedding } from "@/lib/rag/embeddings";
+import { embedText, serializeEmbedding } from "@/lib/rag/embeddings";
 import { matchResumeToJobs, getLatestResume } from "@/lib/rag/matching";
-import { extractJobProfileLocal } from "@/lib/scoring/fit";
+import { extractJobProfile } from "@/lib/scoring/fit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
 
     const db = getDb();
     const jobText = `${jobData.title} ${jobData.description} ${jobData.requirements}`;
-    const embedding = embedTextLocal(jobText);
-    const structuredProfile = extractJobProfileLocal({
+    const embedding = await embedText(jobText);
+    const structuredProfile = await extractJobProfile({
       title: jobData.title,
       company: jobData.company,
       description: jobData.description,
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     const resume = await getLatestResume();
     let matches: Awaited<ReturnType<typeof matchResumeToJobs>> = [];
     if (resume) {
-      matches = await matchResumeToJobs(resume.id, { useAi: false });
+      matches = await matchResumeToJobs(resume.id, { useAi: true });
     }
 
     const newMatch = matches.find((m) => m.jobId === id);

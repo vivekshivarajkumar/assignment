@@ -5,11 +5,14 @@ import { memory } from './engine.js'
 const FADE = 0.45
 
 // Runs one page: owns the canvas, the animation loop, pointer input and fades.
-export default function Stage({ page, onDone }) {
+// While `paused`, the page's clock stops and nothing is redrawn.
+export default function Stage({ page, onDone, paused = false }) {
   const canvasRef = useRef(null)
   const onDoneRef = useRef(onDone)
+  const pausedRef = useRef(paused)
   useEffect(() => {
     onDoneRef.current = onDone
+    pausedRef.current = paused
   })
 
   useEffect(() => {
@@ -21,6 +24,8 @@ export default function Stage({ page, onDone }) {
     const start = performance.now()
     let last = start
     let now = start
+    let pausedFor = 0 // ms spent paused, left out of the page's clock
+    const clock = () => (now - start - pausedFor) / 1000
 
     const api = {
       memory,
@@ -46,9 +51,15 @@ export default function Stage({ page, onDone }) {
     let raf
     const frame = (ts) => {
       now = ts
+      if (pausedRef.current) {
+        pausedFor += ts - last
+        last = ts
+        raf = requestAnimationFrame(frame)
+        return
+      }
       const dt = Math.min(0.05, (ts - last) / 1000)
       last = ts
-      const t = (ts - start) / 1000
+      const t = clock()
       ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0)
       ctx.globalAlpha = 1
       scene.draw(ctx, t, dt)
@@ -80,10 +91,10 @@ export default function Stage({ page, onDone }) {
       return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]
     }
     const handler = (name) => (e) => {
-      if (finishedAt !== null || !scene[name]) return
+      if (finishedAt !== null || pausedRef.current || !scene[name]) return
       if (name === 'down') canvas.setPointerCapture(e.pointerId)
       const [x, y] = toLogical(e)
-      scene[name](x, y, (now - start) / 1000)
+      scene[name](x, y, clock())
     }
     const down = handler('down')
     const move = handler('move')

@@ -28,6 +28,7 @@ body {
 
 .screen {
   position: relative;
+  container-type: inline-size;
   width: min(100vw, calc(100dvh * 9 / 16));
   aspect-ratio: 9 / 16;
   overflow: hidden;
@@ -61,6 +62,7 @@ button {
   color: #1b1d22;
   display: grid;
   place-items: center;
+  z-index: 2;
 }
 
 .confirm {
@@ -68,35 +70,44 @@ button {
   inset: 0;
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.52);
 }
 
 .confirm-box {
   width: 100%;
   background: #fff;
-  padding: 28px 24px 32px;
+  padding: 7.5cqw 6cqw 8cqw;
   text-align: center;
-  color: #111;
+  color: #000;
 }
 
 .confirm-box p {
-  font-size: 24px;
-  margin: 0 0 22px;
+  font-size: 5.4cqw;
+  line-height: 1.3;
+  margin: 0 auto 7cqw;
+  max-width: 64cqw;
 }
 
 .confirm-buttons {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 5.2cqw;
 }
 
 .confirm-buttons button {
-  width: 120px;
-  padding: 10px 0;
-  font-size: 22px;
+  width: 29cqw;
+  height: 13cqw;
+  font-size: 4.8cqw;
+  color: #000;
   background: #fff;
-  border: 2px solid #111;
-  border-bottom-width: 6px;
+  border: 0.45cqw solid #000;
+  border-bottom-width: 1.4cqw;
+  border-radius: 0;
+}
+
+.confirm-buttons button:active {
+  border-bottom-width: 0.45cqw;
+  transform: translateY(0.95cqw);
 }
 
 .page {

@@ -99,7 +99,12 @@ export default function App() {
         {screen === 'title' && <Stage page={title} onDone={fromTitle} />}
         {screen === 'play' && (
           <>
-            <Stage key={`${pos.chapter}-${pos.page}`} page={pages[pos.page]} onDone={next} />
+            <Stage
+              key={`${pos.chapter}-${pos.page}`}
+              page={pages[pos.page]}
+              onDone={next}
+              paused={confirmHome}
+            />
             <button className="home" aria-label="Main menu" onClick={() => setConfirmHome(true)}>
               <HomeIcon />
             </button>

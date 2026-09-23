@@ -1,7 +1,8 @@
 // Chapter 1, page 2 · brushing teeth
 // The camera pans on from the 07:28 clock into the bathroom. Mira brushes her
 // teeth, half asleep; drag the toothbrush in the panel below side to side to
-// fill the bar. Drawn on the same 900 x 2000 phone sheet as the bedroom.
+// fill the bar. Then the camera pans on to the clock: 08:02. Drawn on the same
+// 900 x 2000 phone sheet as the bedroom.
 import { W, tapHint, rng, clamp, easeInOut } from '../paint.js'
 import { pop } from '../sound.js'
 import { K, ink, shape, shadeInside, bigDisplay, border, sheetTop } from './ch01-wake.js'
@@ -22,6 +23,11 @@ const PAN = 1076 // the clock close-up sits this far to the left of the bathroom
 const BAR = { x: 130, y: 1262, w: 638, h: 68 }
 const PANEL = { x: 45, y: 1385, w: 810, h: 350 }
 const STROKES = 12 // side-to-side strokes to finish
+const PANEL_X = 1076 // where the next clock close-up starts, to the right
+// once she's done, the clock ticks from 07:28 to 08:02 while she gets ready
+const FROM = 7 * 60 + 28
+const TO = 8 * 60 + 2
+const TICK = 0.045
 
 // ---------- the room ----------
 
@@ -39,20 +45,20 @@ function tornBottom(ctx) {
   const r = rng(211)
   ctx.beginPath()
   ctx.moveTo(-40, 0)
-  ctx.lineTo(960, 0)
-  for (let x = 960; x >= -40; x -= 18) ctx.lineTo(x, 1552 + (r() - 0.5) * 18)
+  ctx.lineTo(1070, 0)
+  for (let x = 1070; x >= -40; x -= 18) ctx.lineTo(x, 1552 + (r() - 0.5) * 18)
   ctx.closePath()
 }
 
 function room(ctx) {
   ctx.fillStyle = B.wall
-  ctx.fillRect(-40, 0, 1000, 760)
+  ctx.fillRect(-40, 0, 1110, 760)
   // tiles below
   ctx.fillStyle = B.tile
-  ctx.fillRect(-40, 750, 1000, 900)
+  ctx.fillRect(-40, 750, 1110, 900)
   ctx.strokeStyle = B.grout
   ctx.lineWidth = 7
-  for (let x = 13; x < 960; x += 147) {
+  for (let x = 13; x < 1070; x += 147) {
     ctx.beginPath()
     ctx.moveTo(x, 750)
     ctx.lineTo(x, 1600)
@@ -61,7 +67,7 @@ function room(ctx) {
   for (let y = 890; y < 1600; y += 146) {
     ctx.beginPath()
     ctx.moveTo(-40, y)
-    ctx.lineTo(960, y)
+    ctx.lineTo(1070, y)
     ctx.stroke()
   }
 
@@ -79,30 +85,88 @@ function room(ctx) {
   ctx.strokeRect(-40, 510, 135, 30)
   box(ctx, -40, 996, 176, 1032, B.frame, 6)
 
-  // cabinet with shelves on the right
-  box(ctx, 815, 185, 940, 905, B.frame, 7)
-  ctx.fillStyle = B.cabinet
-  ctx.fillRect(845, 215, 100, 660)
+  // cabinet on the right: toiletries on two shelves, toilet rolls below
+  box(ctx, 815, 185, 1090, 905, B.frame, 7)
+  box(ctx, 848, 215, 1090, 875, B.cabinet, 5)
+  box(ctx, 848, 410, 1090, 442, B.frame, 5)
+  box(ctx, 848, 645, 1090, 680, B.frame, 5)
+  const item = (x1, y1, x2, y2) => box(ctx, x1, y1, x2, y2, '#e2e2e2', 4)
+  // top shelf: pump bottle, tall bottle, jar and a box
+  item(865, 300, 925, 410)
+  item(882, 260, 906, 300)
+  item(876, 250, 912, 262)
   ctx.strokeStyle = K.ink
-  ctx.lineWidth = 5
-  for (const y of [410, 640, 790]) {
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.arc(925, 350, 18, -Math.PI / 2, Math.PI / 2)
+  ctx.stroke()
+  item(935, 270, 1000, 410)
+  item(940, 256, 994, 272)
+  item(1005, 330, 1062, 410)
+  item(1025, 280, 1062, 330)
+  // middle shelf: bottles with labels
+  item(852, 530, 915, 645)
+  item(864, 480, 900, 530)
+  for (const x of [872, 882, 892]) ink(ctx, [[x, 486], [x, 524]], 3)
+  ink(ctx, [[860, 560], [872, 552], [884, 562], [896, 552]], 3)
+  ink(ctx, [[876, 610], [880, 588], [886, 604], [890, 584]], 3)
+  item(925, 530, 985, 645)
+  item(930, 515, 980, 532)
+  ink(ctx, [[934, 580], [946, 572], [958, 582], [970, 572]], 3)
+  item(995, 560, 1020, 645)
+  item(1000, 540, 1015, 560)
+  item(1030, 580, 1062, 645)
+  item(1040, 555, 1062, 580)
+  // bottom shelf: toilet rolls
+  item(905, 690, 1000, 772)
+  item(855, 775, 945, 875)
+  item(948, 775, 1044, 875)
+  for (const x of [890, 983]) {
+    ctx.setLineDash([3, 10])
+    ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(845, y)
-    ctx.lineTo(940, y)
+    ctx.moveTo(x, 790)
+    ctx.lineTo(x, 865)
     ctx.stroke()
   }
-  box(ctx, 862, 300, 906, 410, '#e8e8e8', 4)
-  box(ctx, 880, 258, 898, 300, '#e8e8e8', 4)
-  box(ctx, 852, 510, 920, 640, '#e8e8e8', 4)
-  box(ctx, 866, 476, 900, 510, '#e8e8e8', 4)
-  ink(ctx, [[870, 590], [880, 570], [890, 590]], 4)
+  ctx.setLineDash([])
 
-  // towel rail with a towel, and the sink's edge
+  // towel rail with a towel on the left
   box(ctx, -40, 1192, 42, 1560, B.frame, 6)
   box(ctx, 74, 1180, 110, 1270, B.frame, 5)
   ink(ctx, [[40, 1222], [80, 1222]], 8)
-  box(ctx, 706, 1300, 960, 1560, B.frame, 6)
-  ink(ctx, [[720, 1350], [960, 1350]], 5)
+
+  // basin: a grey slab with a toothbrush on it, and the pedestal below
+  box(ctx, 855, 1380, 1090, 1560, B.frame, 6)
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 6
+  ctx.beginPath()
+  ctx.moveTo(862, 1480)
+  ctx.quadraticCurveTo(960, 1400, 1060, 1480)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(876, 1460)
+  ctx.quadraticCurveTo(960, 1420, 1046, 1462)
+  ctx.stroke()
+  ctx.fillStyle = B.frame
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 7
+  ctx.beginPath()
+  ctx.moveTo(1090, 1300)
+  ctx.lineTo(740, 1300)
+  ctx.quadraticCurveTo(712, 1302, 715, 1340)
+  ctx.quadraticCurveTo(718, 1378, 740, 1380)
+  ctx.lineTo(1090, 1380)
+  ctx.fill()
+  ctx.stroke()
+  ink(ctx, [[740, 1300], [760, 1330], [1090, 1330]], 4)
+  ctx.beginPath()
+  ctx.roundRect(885, 1316, 125, 24, 12)
+  ctx.fillStyle = '#e2e2e2'
+  ctx.fill()
+  ctx.lineWidth = 4
+  ctx.stroke()
+  ink(ctx, [[945, 1318], [945, 1338]], 3)
 }
 
 // ---------- Mira at the mirror ----------
@@ -354,6 +418,12 @@ export default function brushTeeth(api) {
   const toSheet = (x, y) => [x / 0.6, y / 0.6 + top()]
   const toScreen = (x, y) => [x * 0.6, (y - top()) * 0.6]
   const panned = (t) => easeInOut(t / PAN_TIME)
+  // after the last stroke: pause, pan right to the clock, tick on to 08:02
+  const panOut = (t) => (doneAt === null ? 0 : easeInOut((t - doneAt - 0.7) / 1.4) * PANEL_X)
+  const tickStart = () => doneAt + 2.3
+  const minuteAt = (t) => Math.min(TO, FROM + Math.max(0, Math.floor((t - tickStart()) / TICK)))
+  const countDone = (t) => doneAt !== null && t > tickStart() + (TO - FROM) * TICK + 0.4
+  const hhmm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}${String(m % 60).padStart(2, '0')}`
 
   return {
     tall: true,
@@ -363,7 +433,7 @@ export default function brushTeeth(api) {
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, W, h)
       const p = strokes / STROKES
-      const offset = (1 - panned(t)) * PAN
+      const offset = (1 - panned(t)) * PAN - panOut(t)
       ctx.save()
       ctx.scale(0.6, 0.6)
       ctx.translate(offset, -top())
@@ -379,6 +449,19 @@ export default function brushTeeth(api) {
       panel(ctx, hx, clamp(p * 1.4, 0, 1))
 
       // the clock close-up we're panning away from, to the left
+      if (doneAt !== null) {
+        // the clock close-up to the right, which we pan to once she's done
+        const bottom = top() + h / 0.6
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(PANEL_X - 6, top(), 1000, bottom - top())
+        border(ctx, PANEL_X - 15, top(), bottom)
+        const m = minuteAt(t)
+        const tick = (t - tickStart()) / TICK
+        ctx.save()
+        ctx.translate(PANEL_X, 0)
+        bigDisplay(ctx, hhmm(m), m < TO && tick > 0 ? 3 : -1, m < TO && tick > 0 ? tick % 1 : 0)
+        ctx.restore()
+      }
       if (offset > 0) {
         const bottom = top() + h / 0.6
         ctx.fillStyle = '#ffffff'
@@ -395,11 +478,11 @@ export default function brushTeeth(api) {
         const [x, y] = toScreen(hx + 300, 1570)
         tapHint(ctx, x, y, t, K.ink)
       }
-      if (doneAt !== null) tapHint(ctx, 50, 50, t)
+      if (countDone(t)) tapHint(ctx, 50, 50, t)
     },
     down(x, y, t) {
       if (doneAt !== null) {
-        if (t - doneAt > 0.5) api.finish()
+        if (countDone(t)) api.finish()
         return
       }
       if (t < PAN_TIME) return

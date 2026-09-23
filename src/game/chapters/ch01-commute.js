@@ -2,7 +2,8 @@
 // The camera pans on from the 08:02 clock into a packed train. Mira stands
 // between two grey commuters with her headphones on, scrolling her phone.
 // The panel below is her feed: tap the heart (or the share arrows) to like a
-// post and scroll on; the bar fills with every post. Same 900 x 2000 sheet.
+// post and scroll on; the bar fills with every post. Then the camera pans on
+// past the man beside her to the clock: 08:58. Same 900 x 2000 sheet.
 import { W, tapHint, rng, easeInOut } from '../paint.js'
 import { pop } from '../sound.js'
 import { K, ink, shape, bigDisplay, border, sheetTop } from './ch01-wake.js'
@@ -33,6 +34,10 @@ const PHOTO = { x: 140, w: 600, h: 385 } // a post's picture; y scrolls
 const HEART = { x: 598, y: 1590 }
 const SHARE = { x: 285, y: 1600 }
 const POSTS = 6 // posts to like to fill the bar
+const PANEL_X = 1076 // where the next clock close-up starts, to the right
+const FROM = 8 * 60 + 2
+const TO = 8 * 60 + 58
+const TICK = 0.03
 
 // ---------- the carriage ----------
 
@@ -57,9 +62,9 @@ function carriage(ctx) {
     }
   }
   // a route map on the right advert
-  ink(ctx, [[625, 157], [890, 152]], 4)
+  ink(ctx, [[625, 157], [1060, 152]], 4)
   ctx.fillStyle = K.ink
-  for (const x of [630, 700, 740, 875]) {
+  for (const x of [630, 740, 875, 1010]) {
     ctx.beginPath()
     ctx.arc(x, 156, 8, 0, Math.PI * 2)
     ctx.fill()
@@ -70,7 +75,7 @@ function carriage(ctx) {
   ctx.fillRect(-40, 215, 1110, 1400)
   ctx.fillStyle = T.seat
   ctx.fillRect(-40, 225, 1110, 20)
-  for (const [x1, x2] of [[195, 505], [655, 960]]) {
+  for (const [x1, x2] of [[195, 505], [655, 1060]]) {
     ctx.fillStyle = '#ffffff'
     ctx.strokeStyle = K.ink
     ctx.lineWidth = 7
@@ -128,24 +133,71 @@ function manLeft(ctx) {
   poly(ctx, [[-20, 1012], [245, 1018], [245, 1052], [-20, 1046]], T.pale, 5) // belt
 }
 
-// Bearded man on the right, glancing at his watch.
+// Bearded man on the right in a dark jacket over a ribbed sweater, reading his
+// phone. Most of him is off-screen until the camera pans on after the feed.
 function manRight(ctx) {
-  poly(ctx, [[600, 1150], [608, 660], [660, 590], [760, 540], [960, 520], [960, 1150]], T.suit)
-  poly(ctx, [[790, 540], [960, 520], [960, 640], [880, 640], [830, 600]], T.sweater, 5)
-  for (let x = 830; x < 960; x += 14) ink(ctx, [[x, 600], [x + 3, 628]], 3)
-  poly(ctx, [[760, 540], [700, 690], [730, 700], [800, 560]], T.suit, 6) // lapel
-  ink(ctx, [[640, 880], [700, 840], [800, 830]], 6) // a fold in his sleeve
-  // head: pale face, grey hair, dark grey beard
-  shape(ctx, [[790, 300], [860, 225], [960, 215], [960, 540], [890, 545], [820, 500], [780, 420]], T.face)
-  poly(ctx, [[780, 330], [810, 250], [880, 212], [960, 205], [960, 280], [880, 285], [820, 320], [800, 380]], '#8a939e', 5)
-  poly(ctx, [[810, 440], [850, 470], [900, 450], [960, 440], [960, 560], [880, 560], [830, 510]], T.beard, 0)
-  ink(ctx, [[810, 440], [830, 510], [880, 560], [960, 560]], 5)
-  ink(ctx, [[860, 370], [862, 386]], 7) // eye
-  ink(ctx, [[840, 342], [880, 336]], 5) // brow
-  ink(ctx, [[790, 390], [772, 420], [794, 436]], 5) // ear
-  // hand raised to look at his watch
-  shape(ctx, [[836, 800], [900, 780], [960, 790], [960, 870], [880, 875], [840, 850]], T.face)
-  poly(ctx, [[872, 798], [896, 796], [898, 868], [874, 870]], '#3a3a3a', 5)
+  const SWEATER = '#8895a0'
+  const JEANS = '#8994a1'
+  // jacket, jeans, and the sweater between the jacket's fronts
+  poly(ctx, [[615, 1150], [620, 760], [650, 650], [720, 590], [790, 560], [930, 550], [1000, 520], [1070, 510], [1070, 1150]], T.suit)
+  poly(ctx, [[790, 1100], [1060, 1100], [1060, 1400], [790, 1400]], JEANS, 0)
+  ink(ctx, [[800, 1110], [805, 1250], [800, 1400]], 5)
+  ink(ctx, [[1000, 1110], [1030, 1160], [1060, 1170]], 5) // pocket
+  for (const s of [[[850, 1170], [900, 1175]], [[830, 1260], [870, 1262]], [[960, 1300], [1000, 1310]]]) ink(ctx, s, 4)
+  poly(ctx, [[798, 600], [925, 600], [932, 1085], [800, 1085]], SWEATER, 0)
+  for (const s of [[[830, 850], [880, 846]], [[820, 940], [880, 936]], [[850, 1010], [900, 1006]], [[860, 900], [900, 896]]]) ink(ctx, s, 4)
+  poly(ctx, [[796, 1080], [934, 1080], [934, 1112], [796, 1112]], SWEATER, 5) // ribbed hem
+  for (let x = 804; x < 930; x += 10) ink(ctx, [[x, 1084], [x, 1108]], 2.5)
+  ink(ctx, [[798, 720], [795, 900], [798, 1100]], 6) // jacket fronts
+  ink(ctx, [[925, 720], [930, 900], [936, 1100]], 6)
+  // jacket collar and lapels
+  poly(ctx, [[760, 570], [800, 522], [900, 516], [945, 540], [935, 580], [905, 556], [805, 562]], T.suit)
+  ink(ctx, [[805, 560], [735, 700], [790, 730], [830, 800]], 6)
+  ink(ctx, [[925, 556], [955, 625], [925, 690], [945, 720]], 6)
+  // neck and ribbed sweater collar
+  shape(ctx, [[795, 488], [885, 488], [890, 585], [795, 585]], T.face, null)
+  ink(ctx, [[798, 500], [796, 575]], 5)
+  ink(ctx, [[886, 500], [888, 572]], 5)
+  poly(ctx, [[778, 590], [850, 600], [930, 575], [938, 620], [860, 642], [790, 632]], SWEATER, 5)
+  for (let x = 790; x < 930; x += 11) ink(ctx, [[x, 598], [x + 2, 628]], 2.5)
+
+  // head: grey hair and beard, heavy-lidded eyes
+  shape(ctx, [[738, 380], [752, 372], [762, 420], [750, 438], [736, 420]], T.face) // ear
+  shape(ctx, [[908, 378], [926, 372], [930, 410], [914, 425]], T.face)
+  shape(ctx, [[750, 300], [762, 258], [802, 230], [870, 228], [905, 258], [912, 320], [910, 420], [890, 480], [850, 505], [800, 500], [765, 460], [750, 400]], T.face)
+  shape(ctx, [[745, 335], [750, 270], [790, 232], [860, 220], [906, 244], [916, 300], [906, 330], [882, 288], [830, 272], [790, 292], [772, 330], [762, 385]], '#8893a0', null)
+  for (const s of [[[790, 250], [820, 240], [850, 245]], [[830, 262], [860, 256], [890, 268]], [[760, 300], [775, 280]]]) ink(ctx, s, 3.5)
+  shape(ctx, [[766, 420], [800, 440], [830, 432], [870, 440], [906, 420], [900, 470], [870, 500], [830, 516], [790, 505], [768, 470]], '#8893a0', null)
+  ink(ctx, [[760, 430], [770, 480], [800, 506], [835, 518], [872, 502], [900, 470], [908, 425]], 5)
+  ink(ctx, [[796, 452], [820, 440], [846, 446], [870, 440], [890, 454]], 7) // moustache
+  ink(ctx, [[782, 350], [800, 346], [816, 350]], 5)
+  ink(ctx, [[852, 352], [868, 350], [884, 356]], 5)
+  ctx.fillStyle = K.ink
+  for (const [x, y] of [[800, 372], [866, 376]]) {
+    ctx.beginPath()
+    ctx.ellipse(x, y, 4, 7, 0, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ink(ctx, [[846, 366], [849, 408], [838, 428], [852, 432]], 5) // nose
+
+  // his right arm: sleeve bending up to the hand that holds his phone
+  poly(ctx, [[640, 650], [690, 720], [790, 790], [845, 820], [835, 860], [680, 975], [615, 985], [612, 800]], T.suit, 0)
+  ink(ctx, [[615, 985], [676, 975], [840, 852]], 6)
+  ink(ctx, [[682, 722], [790, 792]], 5)
+  ctx.save()
+  ctx.translate(872, 700)
+  ctx.rotate(0.15)
+  ctx.beginPath()
+  ctx.roundRect(-36, -84, 72, 168, 18)
+  ctx.fillStyle = '#c7c7c7'
+  ctx.fill()
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 6
+  ctx.stroke()
+  ctx.restore()
+  shape(ctx, [[792, 704], [842, 692], [892, 704], [898, 762], [872, 800], [832, 812], [798, 792], [786, 744]], T.face)
+  for (const y of [722, 748, 772]) ink(ctx, [[852, y], [896, y - 4]], 4.5)
+  poly(ctx, [[790, 780], [840, 812], [832, 848], [786, 822]], T.suit, 5) // cuff
 }
 
 // Mira in a striped cardigan and big blue headphones, eyes on her phone.
@@ -510,6 +562,11 @@ export default function commute(api) {
   const top = () => sheetTop(api.height())
   const toScreen = (x, y) => [x * 0.6, (y - top()) * 0.6]
   const toSheet = (x, y) => [x / 0.6, y / 0.6 + top()]
+  const panOut = (t) => (doneAt === null ? 0 : easeInOut((t - doneAt - 0.9) / 1.6) * PANEL_X)
+  const tickStart = () => doneAt + 2.6
+  const minuteAt = (t) => Math.min(TO, FROM + Math.max(0, Math.floor((t - tickStart()) / TICK)))
+  const countDone = (t) => doneAt !== null && t > tickStart() + (TO - FROM) * TICK + 0.4
+  const hhmm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}${String(m % 60).padStart(2, '0')}`
   const scrollAt = (t) => (likedAt === null ? 0 : easeInOut((t - likedAt - 0.35) / 0.45))
 
   return {
@@ -524,7 +581,7 @@ export default function commute(api) {
         index += 1
         likedAt = null
       }
-      const offset = (1 - easeInOut(t / PAN_TIME)) * PAN
+      const offset = (1 - easeInOut(t / PAN_TIME)) * PAN - panOut(t)
       ctx.save()
       ctx.scale(0.6, 0.6)
       ctx.translate(offset, -top())
@@ -546,6 +603,20 @@ export default function commute(api) {
       bar(ctx, liked / POSTS)
       feed(ctx, index, scrollAt(t), likedAt, t)
 
+      // the clock close-up to the right, which we pan to once she's done
+      if (doneAt !== null) {
+        const bottom = top() + h / 0.6
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(PANEL_X - 6, top(), 1000, bottom - top())
+        border(ctx, PANEL_X - 15, top(), bottom)
+        const m = minuteAt(t)
+        const tick = (t - tickStart()) / TICK
+        ctx.save()
+        ctx.translate(PANEL_X, 0)
+        bigDisplay(ctx, hhmm(m), m < TO && tick > 0 ? 3 : -1, m < TO && tick > 0 ? tick % 1 : 0)
+        ctx.restore()
+      }
+
       // the 08:02 clock we're panning away from, to the left
       if (offset > 0) {
         const bottom = top() + h / 0.6
@@ -563,11 +634,11 @@ export default function commute(api) {
         const [x, y] = toScreen(HEART.x, HEART.y)
         tapHint(ctx, x, y, t, K.ink)
       }
-      if (doneAt !== null && t - doneAt > 0.8) tapHint(ctx, 50, 50, t)
+      if (countDone(t)) tapHint(ctx, 50, 50, t)
     },
     down(x, y, t) {
       if (doneAt !== null) {
-        if (t - doneAt > 0.8) api.finish()
+        if (countDone(t)) api.finish()
         return
       }
       if (t < PAN_TIME || likedAt !== null) return

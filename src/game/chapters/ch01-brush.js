@@ -183,42 +183,52 @@ const FACE = [
   [376, 690], [544, 690], [548, 780], [545, 842], [520, 874], [452, 888], [392, 874],
   [374, 842], [370, 780],
 ]
-const NECK = [[405, 870], [495, 870], [502, 968], [398, 968]]
-// her body below the raised arm stops at the armpit (x 612); tiles show beyond
+const NECK = [[398, 870], [505, 870], [515, 945], [545, 962], [380, 962], [400, 935]]
+// Traced from the reference. Her left arm hangs by her side (x 235..300); the
+// vest runs from there to her right side (x 600), where the raised arm begins.
 const TORSO = [
-  [235, 1420], [235, 1060], [255, 1012], [320, 982], [400, 955], [500, 955], [580, 982],
-  [606, 1060], [612, 1140], [616, 1420],
+  [235, 1420], [235, 1045], [250, 1010], [290, 992], [330, 985], [380, 962], [545, 962],
+  [600, 985], [600, 1420],
 ]
-const VEST = [[302, 1135], [376, 1160], [450, 1172], [524, 1160], [596, 1135], [616, 1420], [288, 1420]]
-const UPPER_ARM = [[560, 985], [640, 1005], [700, 1090], [746, 1162], [700, 1172], [650, 1110], [600, 1050]]
-const FOREARM = [[590, 890], [665, 856], [712, 960], [752, 1100], [750, 1172], [724, 1186], [696, 1176], [682, 1110], [630, 1000]]
-const HAND = [
-  [560, 836], [572, 798], [598, 788], [624, 790], [650, 794], [664, 814], [656, 850],
-  [640, 876], [618, 900], [590, 906], [566, 886],
+const VEST = [
+  [300, 1125], [335, 1095], [360, 1120], [400, 1150], [440, 1165], [480, 1150], [530, 1122],
+  [554, 1110], [580, 1128], [600, 1140], [600, 1420], [300, 1420],
 ]
+const UPPER_ARM = [[560, 975], [600, 985], [640, 1060], [665, 1125], [700, 1170], [660, 1162], [600, 1112]]
+const FOREARM = [
+  [565, 900], [640, 878], [700, 990], [742, 1090], [752, 1150], [735, 1170], [700, 1170],
+  [662, 1125], [630, 1040], [590, 960],
+]
+// the back of her hand below the brush, and four fingers curled over it
+const PALM = [[505, 840], [530, 820], [650, 806], [660, 840], [630, 872], [596, 896], [560, 896], [528, 870]]
+const FINGERS = [[536, 826], [570, 822], [604, 818], [638, 814]] // centres; each tilts left at the top
 
 // k: 0..1, how far across her mouth the brush is (follows the player's drag)
 function mira(ctx, k) {
   const dx = (k - 0.5) * 16
 
-  // body, with the vest; straps are drawn as a pale band between two ink lines
+  // body: her left arm hanging, the vest, and the underside of the raised arm
   shape(ctx, TORSO, '#ffffff', null)
-  ink(ctx, [[236, 1060], [235, 1240], [235, 1420]], 6)
-  ink(ctx, [[258, 1012], [240, 1045]], 6)
   shape(ctx, UPPER_ARM, '#ffffff', null)
   shape(ctx, VEST, B.vest, null)
-  ink(ctx, [[302, 1135], [376, 1160], [450, 1172], [524, 1160], [596, 1135]], 6)
-  ink(ctx, [[300, 1120], [292, 1270], [290, 1420]], 5)
-  ink(ctx, [[606, 1060], [612, 1140], [614, 1270], [616, 1420]], 6)
+  ink(ctx, [[240, 1030], [235, 1100], [235, 1260], [235, 1420]], 7) // outside of her left arm
+  ink(ctx, [[285, 1070], [300, 1120], [300, 1260], [300, 1420]], 6) // inside of it
+  // vest: sides, and a neckline with a doubled hem that dips between the straps
+  ink(ctx, [[335, 1095], [305, 1125], [300, 1420]], 6)
+  ink(ctx, [[554, 1110], [580, 1128], [600, 1140]], 6)
+  ink(ctx, [[335, 1095], [360, 1120], [400, 1150], [440, 1165], [480, 1150], [530, 1122], [554, 1110]], 6)
+  ink(ctx, [[340, 1110], [362, 1134], [400, 1162], [440, 1177], [480, 1162], [530, 1134], [554, 1124]], 5)
+  // gathers under the neckline
   for (const s of [
-    [[340, 1182], [366, 1194], [392, 1204]], [[420, 1200], [446, 1208], [472, 1208]],
-    [[520, 1192], [544, 1184], [566, 1176]], [[350, 1250], [370, 1270], [384, 1290]],
-    [[520, 1250], [512, 1276]], [[430, 1236], [452, 1240], [476, 1236]],
-  ]) ink(ctx, s, 4)
-  for (const [x1, y1, x2, y2] of [[345, 962, 302, 1138], [553, 962, 596, 1138]]) {
-    ctx.lineCap = 'round'
+    [[380, 1172], [405, 1178], [430, 1180]], [[390, 1190], [415, 1194], [440, 1193]],
+    [[420, 1203], [450, 1200], [480, 1196]], [[350, 1188], [356, 1202], [362, 1215]],
+    [[375, 1190], [388, 1204], [400, 1218]], [[520, 1186], [510, 1195], [500, 1202]],
+  ]) ink(ctx, s, 5)
+  // straps: nearly vertical, a grey band between two ink lines
+  for (const [x1, y1, x2, y2] of [[345, 962, 338, 1097], [562, 962, 554, 1110]]) {
+    ctx.lineCap = 'butt'
     ctx.strokeStyle = K.ink
-    ctx.lineWidth = 17
+    ctx.lineWidth = 19
     ctx.beginPath()
     ctx.moveTo(x1, y1)
     ctx.lineTo(x2, y2)
@@ -227,22 +237,23 @@ function mira(ctx, k) {
     ctx.lineWidth = 8
     ctx.stroke()
   }
-  // collarbones and breastbone in pale blue, shoulder line on the left
-  ink(ctx, [[378, 988], [400, 984], [422, 986]], 4, B.tile)
-  ink(ctx, [[480, 986], [502, 984], [524, 988]], 4, B.tile)
-  ink(ctx, [[456, 1092], [460, 1128]], 4, B.tile)
-  ink(ctx, [[400, 955], [330, 980], [262, 1010]], 6)
+  // collarbones and breastbone in pale blue; the side of her chest by the arm
+  ink(ctx, [[360, 987], [380, 984], [402, 984]], 5, B.tile)
+  ink(ctx, [[480, 984], [502, 984], [522, 987]], 5, B.tile)
+  ink(ctx, [[456, 1110], [460, 1132]], 5, B.tile)
+  ink(ctx, [[600, 1060], [590, 1092]], 5)
+  // underside of the raised arm, from the armpit to the elbow
+  ink(ctx, [[600, 1112], [630, 1135], [665, 1158], [705, 1170]], 6)
 
-  // the raised arm: upper arm, then the forearm up to her mouth
-  ink(ctx, [[500, 955], [580, 982], [640, 1008], [700, 1090], [746, 1162]], 6)
-
-  // neck, face, then the hair around it
+  // neck: lines from the jaw that flare out into the shoulders
   shape(ctx, NECK, '#ffffff', null)
-  shadeInside(ctx, NECK, [[440, 870], [500, 870], [500, 920], [440, 910]], B.tile)
-  ink(ctx, [[405, 880], [400, 940], [396, 962]], 5)
-  ink(ctx, [[495, 880], [500, 940], [504, 962]], 5)
+  shadeInside(ctx, NECK, [[440, 870], [505, 870], [505, 915], [440, 905]], B.tile)
+  ink(ctx, [[398, 888], [400, 935], [380, 962], [330, 985], [270, 1000], [245, 1025]], 7)
+  ink(ctx, [[505, 905], [515, 940], [545, 958], [600, 985]], 7)
+
+  // face, then the hair around it
   shape(ctx, FACE, '#ffffff', null)
-  ink(ctx, [[374, 842], [392, 874], [452, 888], [520, 874], [545, 842]], 5) // jaw
+  ink(ctx, [[378, 862], [395, 884], [430, 894], [470, 891], [525, 870]], 7) // jaw
   ctx.save()
   ctx.beginPath()
   ctx.rect(-100, 0, 1200, 2000)
@@ -253,7 +264,6 @@ function mira(ctx, k) {
   ctx.clip('evenodd')
   shape(ctx, HAIR, K.hair, null)
   ctx.restore()
-  // strand lines through the hair and a few flyaways on top
   for (const s of [
     [[420, 580], [360, 640], [320, 760], [314, 880]], [[470, 580], [560, 640], [600, 760], [600, 880]],
     [[400, 600], [340, 700], [300, 860]], [[520, 600], [590, 700], [614, 860]],
@@ -264,47 +274,58 @@ function mira(ctx, k) {
     [[330, 610], [300, 640], [284, 690]],
   ]) ink(ctx, s, 3)
 
-  // tired eyes peeking under the fringe, with bags under them; a curly nose
+  // tired eyes, pale bags under them, and an S-shaped nose
   ctx.fillStyle = K.ink
-  for (const x of [392, 524]) {
+  for (const [x, y] of [[391, 742], [518, 745]]) {
     ctx.beginPath()
-    ctx.arc(x, 744, 6, 0, Math.PI * 2)
+    ctx.ellipse(x, y, 6, 8, 0, 0, Math.PI * 2)
     ctx.fill()
   }
-  ink(ctx, [[378, 741], [392, 738], [406, 741]], 5)
-  ink(ctx, [[510, 741], [524, 738], [538, 741]], 5)
-  ink(ctx, [[378, 790], [390, 794], [404, 792]], 5, B.tile)
-  ink(ctx, [[512, 794], [526, 797], [540, 794]], 5, B.tile)
-  ink(ctx, [[440, 748], [430, 764], [436, 776], [448, 774], [452, 764]], 5)
+  ink(ctx, [[384, 772], [393, 775], [404, 773]], 6, B.tile)
+  ink(ctx, [[510, 782], [522, 785], [536, 782]], 6, B.tile)
+  ink(ctx, [[441, 742], [428, 752], [424, 761], [432, 770], [438, 778], [434, 787], [426, 789]], 6)
 
-  // fringe: uneven strands hanging over her forehead, a few past her eyes
-  const lengths = [40, 58, 30, 66, 44, 36, 70, 48, 34, 60, 42, 54]
+  // fringe: uneven strands hanging over her forehead, stopping above her eyes
+  const lengths = [26, 36, 20, 40, 30, 24, 42, 32, 22, 38, 28, 34]
   lengths.forEach((len, i) => {
     const x = 378 + i * 15
     ink(ctx, [[x, 660], [x + 2, 690], [x + 5, 690 + len * 0.6], [x + 8, 690 + len]], 12, K.hair)
   })
-  for (const s of [[[400, 650], [404, 700], [410, 740]], [[470, 650], [474, 710], [478, 752]], [[520, 650], [524, 700], [528, 742]]]) ink(ctx, s, 3, K.ink)
+  for (const s of [[[400, 650], [404, 690], [408, 722]], [[470, 650], [474, 694], [478, 728]], [[520, 650], [524, 690], [528, 722]]]) ink(ctx, s, 3, K.ink)
 
   shape(ctx, FOREARM, '#ffffff')
 
-  // toothbrush in her mouth, held in her fist; both move with the player's strokes
-  ink(ctx, [[424, 812], [430, 820], [438, 824]], 5)
+  // toothbrush held in her fist; both move with the player's strokes
   ctx.save()
   ctx.translate(dx, 0)
   ctx.lineCap = 'round'
   ctx.strokeStyle = K.ink
   ctx.lineWidth = 20
   ctx.beginPath()
-  ctx.moveTo(440, 820)
-  ctx.lineTo(648, 828)
+  ctx.moveTo(438, 822)
+  ctx.lineTo(642, 826)
   ctx.stroke()
   ctx.strokeStyle = B.brush
   ctx.lineWidth = 11
   ctx.stroke()
-  shape(ctx, HAND, '#ffffff')
-  for (const x of [592, 616, 640]) ink(ctx, [[x, 792], [x + 2, 812], [x, 832]], 4.5)
-  ink(ctx, [[572, 838], [610, 842], [648, 836]], 4)
+  shape(ctx, PALM, '#ffffff')
+  ink(ctx, [[562, 886], [580, 890], [598, 890]], 5) // a crease across the wrist
+  for (const [cx, cy] of FINGERS) {
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(-0.35)
+    ctx.beginPath()
+    ctx.roundRect(-12, -28, 24, 56, 12)
+    ctx.fillStyle = '#ffffff'
+    ctx.fill()
+    ctx.strokeStyle = K.ink
+    ctx.lineWidth = 6
+    ctx.stroke()
+    ctx.restore()
+  }
   ctx.restore()
+  // mouth: the corner of her lips, running into the brush
+  ink(ctx, [[420, 790], [426, 804], [432, 818]], 6)
 }
 
 // ---------- progress bar and the toothbrush panel ----------

@@ -163,10 +163,13 @@ function mira(ctx, t) {
   }
   ctx.restore()
   shape(ctx, cardigan, null)
-  poly(ctx, [[392, 772], [508, 772], [522, 960], [378, 960]], '#ffffff', 5)
-  ink(ctx, [[450, 810], [450, 950]], 4)
-  poly(ctx, [[392, 772], [450, 808], [418, 856], [376, 806]], '#ffffff', 5)
-  poly(ctx, [[508, 772], [450, 808], [482, 856], [524, 806]], '#ffffff', 5)
+  // white shirt between the cardigan's fronts, with a pointed collar
+  poly(ctx, [[380, 790], [500, 790], [514, 1010], [370, 1010]], '#ffffff', 0)
+  ink(ctx, [[380, 800], [374, 900], [370, 1005]], 6) // cardigan fronts
+  ink(ctx, [[500, 800], [510, 900], [516, 1005]], 6)
+  ink(ctx, [[438, 830], [438, 1005]], 5) // button placket
+  ink(ctx, [[404, 880], [412, 900]], 4) // creases
+  ink(ctx, [[462, 872], [456, 896]], 4)
   // bag strap over her right shoulder
   ctx.strokeStyle = K.ink
   ctx.lineWidth = 16
@@ -175,8 +178,19 @@ function mira(ctx, t) {
   ctx.lineTo(572, 1150)
   ctx.stroke()
   // neck and face
-  shape(ctx, [[410, 740], [490, 740], [494, 790], [408, 790]], '#ffffff')
-  shape(ctx, [[376, 630], [520, 630], [524, 700], [514, 748], [482, 772], [418, 772], [386, 748], [374, 700]], '#ffffff')
+  shape(ctx, [[398, 745], [476, 745], [480, 800], [396, 800]], '#ffffff', null)
+  ink(ctx, [[400, 752], [398, 798]], 6)
+  ink(ctx, [[474, 748], [476, 796]], 6)
+  poly(ctx, [[396, 788], [440, 824], [412, 856]], '#ffffff', 6)
+  poly(ctx, [[480, 788], [440, 824], [468, 856]], '#ffffff', 6)
+  shape(ctx, [[365, 636], [510, 636], [512, 700], [505, 735], [470, 756], [420, 763], [385, 749], [368, 720]], '#ffffff', null)
+  ctx.strokeStyle = K.ink // jaw: a smooth, rounded curve
+  ctx.lineWidth = 7
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(372, 742)
+  ctx.bezierCurveTo(394, 766, 486, 768, 510, 736)
+  ctx.stroke()
   // hair: a dark mop with a heavy fringe
   // hair around her face, falling in long strands past her jaw
   const hair = [
@@ -188,29 +202,33 @@ function mira(ctx, t) {
   for (const x of [330, 350, 540, 560, 578]) ink(ctx, [[x, 660], [x + 2, 720], [x - 2, 780]], 3, '#3a3a3a')
   // fringe: uneven strands down to her eyebrows
   shape(ctx, [[350, 560], [420, 528], [520, 540], [560, 600], [524, 640], [376, 640]], '#0f0f0f', null)
-  const lengths = [26, 40, 20, 46, 30, 22, 50, 34, 24, 44]
+  const lengths = [18, 28, 14, 30, 22, 16, 32, 24, 16, 28]
   lengths.forEach((len, i) => {
     const x = 382 + i * 15
     ink(ctx, [[x, 600], [x + 2, 630], [x + 4, 630 + len * 0.6], [x + 6, 630 + len]], 11, '#0f0f0f')
   })
+  // strand lines in the hair above the fringe (they stop before her face)
   for (let i = 0; i < 12; i++) {
     const x = 330 + i * 22
-    ink(ctx, [[x, 520], [x - 6, 600], [x - 2, 680 + (i % 3) * 20]], 3, '#3a3a3a')
+    ink(ctx, [[x, 520], [x - 4, 570], [x - 6, 620]], 3, '#3a3a3a')
   }
-  // eyes looking down, small nose and mouth
+  // eyes: two small upright ovals; a hooked nose; a small round mouth
   if (blink) {
-    ink(ctx, [[394, 680], [410, 682]], 5)
-    ink(ctx, [[486, 680], [502, 682]], 5)
+    ink(ctx, [[382, 670], [398, 671]], 5)
+    ink(ctx, [[482, 670], [498, 671]], 5)
   } else {
     ctx.fillStyle = K.ink
-    for (const x of [402, 494]) {
+    for (const x of [390, 490]) {
       ctx.beginPath()
-      ctx.ellipse(x, 682, 6, 9, 0, 0, Math.PI * 2)
+      ctx.ellipse(x, 668, 5, 10, 0, 0, Math.PI * 2)
       ctx.fill()
     }
   }
-  ink(ctx, [[446, 670], [438, 704], [450, 708]], 5)
-  ink(ctx, [[440, 738], [456, 736]], 5)
+  ink(ctx, [[441, 662], [439, 688], [430, 696], [436, 704], [447, 701]], 6)
+  ctx.fillStyle = K.ink
+  ctx.beginPath()
+  ctx.ellipse(440, 723, 8, 4.5, 0, 0, Math.PI * 2)
+  ctx.fill()
   // headphones: a band over her head and two cups
   ctx.strokeStyle = K.ink
   ctx.lineWidth = 24
@@ -220,19 +238,32 @@ function mira(ctx, t) {
   ctx.strokeStyle = T.blue
   ctx.lineWidth = 13
   ctx.stroke()
-  shape(ctx, [[302, 600], [336, 596], [340, 718], [304, 722]], T.blue)
-  shape(ctx, [[556, 590], [588, 594], [586, 708], [554, 704]], T.blue)
+  shape(ctx, [[306, 604], [330, 600], [334, 712], [308, 716]], T.blue)
+  shape(ctx, [[558, 594], [580, 598], [578, 704], [556, 700]], T.blue)
   // cord down to her phone
   ctx.strokeStyle = T.blue
   ctx.lineWidth = 5
   ctx.beginPath()
-  ctx.moveTo(318, 722)
-  ctx.quadraticCurveTo(330, 860, 392, 960)
+  ctx.moveTo(320, 716)
+  ctx.quadraticCurveTo(330, 860, 380, 975)
   ctx.stroke()
-  // phone in both hands
-  shape(ctx, [[395, 918], [482, 918], [484, 992], [395, 994]], T.blue)
-  shape(ctx, [[360, 980], [420, 960], [460, 990], [430, 1040], [370, 1040]], '#ffffff')
-  shape(ctx, [[470, 960], [520, 970], [530, 1030], [470, 1040]], '#ffffff')
+  // phone held in both hands
+  ctx.beginPath()
+  ctx.roundRect(392, 912, 92, 92, 16)
+  ctx.fillStyle = T.blue
+  ctx.fill()
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 8
+  ctx.stroke()
+  ctx.strokeStyle = '#7cc0e2'
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.moveTo(404, 930)
+  ctx.lineTo(472, 930)
+  ctx.stroke()
+  poly(ctx, [[350, 1004], [366, 978], [394, 964], [410, 978], [404, 1004]], '#ffffff', 6)
+  ink(ctx, [[372, 990], [396, 984]], 4)
+  poly(ctx, [[474, 1004], [478, 972], [500, 966], [514, 990], [506, 1004]], '#ffffff', 6)
 }
 
 // ---------- the feed ----------

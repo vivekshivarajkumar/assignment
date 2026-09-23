@@ -21,7 +21,7 @@ const K = {
   grid: '#c5d4de',
   gridDark: '#55636f',
   hair: '#292121',
-  hairLight: '#4a3d3d',
+  hairDark: '#161111',
   clock: '#53a6ce',
   face: '#464746',
   cell: '#3a3a3a',
@@ -45,7 +45,26 @@ function ink(ctx, pts, width = 6, color = K.ink) {
   }
 }
 
-// Smooth closed shape through points; fills and/or strokes it in ink.
+// Smooth open ink line through points.
+function line(ctx, pts, width = 6) {
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = width
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(pts[0][0], pts[0][1])
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i][0] + pts[i + 1][0]) / 2
+    const my = (pts[i][1] + pts[i + 1][1]) / 2
+    ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my)
+  }
+  const last = pts[pts.length - 1]
+  ctx.lineTo(last[0], last[1])
+  ctx.stroke()
+}
+
+// Smooth closed shape through points ([x, y] or [x, y, 's'] for a sharp corner);
+// fills and/or strokes it in ink.
 function shape(ctx, pts, fill, stroke = K.ink, width = 6) {
   const n = pts.length
   const mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2]
@@ -54,7 +73,11 @@ function shape(ctx, pts, fill, stroke = K.ink, width = 6) {
   ctx.moveTo(m0[0], m0[1])
   for (let i = 0; i < n; i++) {
     const m = mid(i)
-    ctx.quadraticCurveTo(pts[i][0], pts[i][1], m[0], m[1])
+    // points marked 's' are sharp corners, e.g. the tips of locks of hair
+    if (pts[i][2] === 's') {
+      ctx.lineTo(pts[i][0], pts[i][1])
+      ctx.lineTo(m[0], m[1])
+    } else ctx.quadraticCurveTo(pts[i][0], pts[i][1], m[0], m[1])
   }
   ctx.closePath()
   if (fill) {
@@ -113,13 +136,29 @@ const HAND = [
 ]
 // thumb along the inside of the pillow
 const THUMB = [[792, 560], [770, 530], [764, 500], [774, 484], [790, 500], [800, 534]]
+// Back of her head seen from above: a dark bob ending in pointed locks, the
+// fringe falling to the right in spiky tufts. Traced from the reference.
 const HAIR = [
-  [290, 560], [330, 500], [400, 462], [480, 452], [560, 470], [600, 492], [630, 510],
-  [604, 526], [628, 548], [600, 556], [616, 582], [586, 590], [570, 610], [548, 660],
-  [546, 720], [530, 780], [470, 800], [400, 790], [336, 760], [296, 700], [280, 630],
+  [331, 494], [387, 464], [474, 451], [524, 458], [562, 479], [599, 491, 's'],
+  [584, 501], [624, 519, 's'], [599, 529], [618, 554, 's'], [599, 560], [609, 600, 's'],
+  [587, 588], [574, 607, 's'], [556, 576], [537, 566], [532, 607], [542, 669],
+  [562, 719], [577, 757], [549, 769], [518, 785, 's'], [499, 789], [481, 802, 's'],
+  [456, 787], [431, 797, 's'], [406, 788], [378, 802, 's'], [349, 778], [318, 786, 's'],
+  [306, 769], [284, 719], [271, 657], [278, 594], [300, 538],
 ]
+// darker, messier fringe
+const FRINGE = [
+  [520, 462], [562, 479], [599, 491, 's'], [584, 501], [624, 519, 's'], [599, 529],
+  [618, 554, 's'], [596, 548], [572, 520], [546, 492],
+]
+// the sliver of face between her hair and the pillow: forehead, nose, lips, chin
 const FACE = [
-  [540, 590], [590, 600], [612, 660], [612, 690], [626, 704], [606, 716], [600, 740], [560, 770], [520, 720],
+  [534, 566], [574, 592], [590, 630], [596, 664], [610, 684], [596, 696], [600, 710],
+  [590, 734], [578, 760], [552, 772], [548, 700], [540, 620],
+]
+const PROFILE = [
+  [580, 607], [590, 638], [593, 666], [607, 682], [594, 694], [599, 708], [588, 731],
+  [578, 757], [590, 766], [689, 769],
 ]
 const QUILT = [
   [-40, 1090], [80, 1060], [190, 1030], [330, 1004], [470, 990], [600, 968],
@@ -158,7 +197,7 @@ function sleeper(ctx) {
   pillowPath(ctx)
   ctx.fillStyle = K.white
   ctx.fill()
-  shadeInside(ctx, pillowPath, [[250, 520], [420, 450], [620, 470], [700, 600], [690, 760], [520, 830], [300, 810], [200, 700]], K.shade)
+  shadeInside(ctx, pillowPath, [[205, 500], [300, 478], [574, 494], [640, 470], [690, 480], [694, 620], [690, 760], [600, 772], [520, 808], [290, 808], [205, 760]], K.shade)
   shadeInside(ctx, pillowPath, [[700, 640], [800, 600], [820, 900], [660, 900]], K.shade)
   pillowPath(ctx)
   ctx.strokeStyle = K.ink
@@ -200,23 +239,55 @@ function sleeper(ctx) {
   }
   for (const s of [[[240, 950], [256, 990], [266, 1010]], [[440, 960], [452, 990], [460, 1010]]]) ink(ctx, s, 4)
 
-  // face turned to the right, eyes closed; hair spread on the pillow
-  shape(ctx, FACE, K.white)
-  ink(ctx, [[560, 660], [574, 668], [588, 664]], 5)
+  // face turned to the right, cheek on the pillow, eye closed
+  shape(ctx, FACE, K.white, null)
+  line(ctx, PROFILE, 6)
+  ink(ctx, [[547, 640], [552, 649], [561, 654], [571, 655]], 5)
+  // hair, with darker fringe tufts and ink strands following the locks
   shape(ctx, HAIR, K.hair, null)
+  // crayon grain inside the hair
+  ctx.save()
+  shape(ctx, HAIR, null, null)
+  ctx.clip()
+  const g = rng(161)
+  ctx.strokeStyle = '#3a2f2f'
+  ctx.lineWidth = 2
+  ctx.globalAlpha = 0.5
+  for (let i = 0; i < 160; i++) {
+    const x = 270 + g() * 360
+    const y = 450 + g() * 350
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(x + 2 + g() * 4, y + 8 + g() * 14)
+    ctx.stroke()
+  }
+  ctx.restore()
+  shape(ctx, HAIR, null, K.ink, 4.5)
+  shape(ctx, FRINGE, K.hairDark, null)
+  // each lock at the bottom ends in a curved stroke to its tip
+  for (const [x, y] of [[318, 786], [378, 802], [431, 797], [481, 802], [518, 785]]) {
+    ink(ctx, [[x - 14, y - 70], [x - 8, y - 34], [x, y]], 4.5)
+  }
   for (const s of [
-    [[400, 520], [420, 600], [410, 700]],
-    [[470, 500], [500, 600], [480, 760]],
-    [[340, 600], [350, 680]],
-    [[540, 520], [560, 560]],
-  ]) ink(ctx, s, 3, K.hairLight)
-  // pillow creases radiating from her head
+    [[406, 682], [431, 744], [440, 794]],
+    [[340, 700], [346, 738], [356, 775]],
+    [[287, 669], [293, 713], [312, 769]],
+    [[499, 725], [510, 752], [518, 781]],
+    [[524, 554], [534, 582], [549, 607]],
+    [[549, 544], [574, 569], [584, 594]],
+    [[440, 470], [470, 480], [500, 476]],
+  ]) ink(ctx, s, 5)
+  // loose strands outside the left edge of the bob
+  ink(ctx, [[287, 600], [262, 657], [268, 707], [293, 757]], 4)
+  ink(ctx, [[300, 560], [280, 600], [276, 640]], 3.5)
+  ink(ctx, [[276, 700], [284, 740], [300, 772]], 3.5)
+  // pillow creases around her head
   for (const s of [
-    [[236, 540], [264, 560], [290, 580]], [[196, 578], [240, 592], [282, 606]],
-    [[120, 632], [200, 636], [276, 642]], [[210, 700], [244, 694], [282, 688]],
-    [[190, 772], [232, 750], [280, 728]], [[240, 800], [266, 776], [300, 752]],
-    [[620, 600], [650, 594], [680, 590]], [[626, 690], [660, 690], [696, 688]],
-    [[610, 740], [640, 752], [676, 760]],
+    [[237, 529], [260, 535], [284, 541]], [[225, 579], [250, 587], [275, 594]],
+    [[231, 625], [250, 620], [268, 616]], [[231, 707], [255, 700], [278, 694]],
+    [[243, 744], [265, 738], [287, 732]], [[120, 632], [180, 636], [240, 640]],
+    [[609, 650], [645, 623], [680, 597]], [[618, 694], [654, 691], [689, 688]],
+    [[624, 738], [652, 742], [680, 747]],
   ]) ink(ctx, s, 5)
 }
 

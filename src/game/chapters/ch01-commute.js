@@ -176,29 +176,34 @@ function mira(ctx, t) {
   ctx.stroke()
   // neck and face
   shape(ctx, [[410, 740], [490, 740], [494, 790], [408, 790]], '#ffffff')
-  shape(ctx, [[362, 630], [550, 630], [552, 700], [540, 750], [500, 770], [420, 770], [372, 740], [360, 690]], '#ffffff')
+  shape(ctx, [[376, 630], [520, 630], [524, 700], [514, 748], [482, 772], [418, 772], [386, 748], [374, 700]], '#ffffff')
   // hair: a dark mop with a heavy fringe
+  // hair around her face, falling in long strands past her jaw
   const hair = [
-    [305, 700], [310, 580], [360, 500], [440, 470], [520, 490], [575, 560], [590, 650],
-    [592, 750], [560, 760], [550, 680], [555, 640], [360, 640], [352, 700], [355, 760], [312, 760],
+    [310, 700], [312, 580], [360, 500], [440, 470], [520, 490], [575, 560], [592, 650],
+    [596, 740], [590, 790, 's'], [570, 770], [556, 796, 's'], [540, 766], [522, 700], [524, 640],
+    [376, 640], [372, 700], [356, 770], [340, 800, 's'], [330, 772], [314, 796, 's'], [306, 760],
   ]
   shape(ctx, hair, '#0f0f0f', null)
-  const fringe = [
-    [350, 560], [420, 530], [520, 540], [560, 600], [548, 650], [520, 628, 's'], [500, 660],
-    [470, 630, 's'], [446, 664], [420, 630, 's'], [396, 664], [372, 634, 's'], [355, 660],
-  ]
-  shape(ctx, fringe, '#0f0f0f', null)
+  for (const x of [330, 350, 540, 560, 578]) ink(ctx, [[x, 660], [x + 2, 720], [x - 2, 780]], 3, '#3a3a3a')
+  // fringe: uneven strands down to her eyebrows
+  shape(ctx, [[350, 560], [420, 528], [520, 540], [560, 600], [524, 640], [376, 640]], '#0f0f0f', null)
+  const lengths = [26, 40, 20, 46, 30, 22, 50, 34, 24, 44]
+  lengths.forEach((len, i) => {
+    const x = 382 + i * 15
+    ink(ctx, [[x, 600], [x + 2, 630], [x + 4, 630 + len * 0.6], [x + 6, 630 + len]], 11, '#0f0f0f')
+  })
   for (let i = 0; i < 12; i++) {
     const x = 330 + i * 22
     ink(ctx, [[x, 520], [x - 6, 600], [x - 2, 680 + (i % 3) * 20]], 3, '#3a3a3a')
   }
   // eyes looking down, small nose and mouth
   if (blink) {
-    ink(ctx, [[392, 680], [410, 682]], 5)
-    ink(ctx, [[486, 680], [504, 682]], 5)
+    ink(ctx, [[394, 680], [410, 682]], 5)
+    ink(ctx, [[486, 680], [502, 682]], 5)
   } else {
     ctx.fillStyle = K.ink
-    for (const x of [400, 496]) {
+    for (const x of [402, 494]) {
       ctx.beginPath()
       ctx.ellipse(x, 682, 6, 9, 0, 0, Math.PI * 2)
       ctx.fill()
@@ -208,15 +213,15 @@ function mira(ctx, t) {
   ink(ctx, [[440, 738], [456, 736]], 5)
   // headphones: a band over her head and two cups
   ctx.strokeStyle = K.ink
-  ctx.lineWidth = 30
+  ctx.lineWidth = 24
   ctx.beginPath()
-  ctx.ellipse(446, 640, 142, 170, 0, Math.PI * 1.02, Math.PI * 1.98)
+  ctx.ellipse(446, 640, 136, 168, 0, Math.PI * 1.02, Math.PI * 1.98)
   ctx.stroke()
   ctx.strokeStyle = T.blue
-  ctx.lineWidth = 18
+  ctx.lineWidth = 13
   ctx.stroke()
-  shape(ctx, [[295, 600], [340, 596], [345, 720], [300, 724]], T.blue)
-  shape(ctx, [[552, 590], [596, 594], [592, 710], [550, 706]], T.blue)
+  shape(ctx, [[302, 600], [336, 596], [340, 718], [304, 722]], T.blue)
+  shape(ctx, [[556, 590], [588, 594], [586, 708], [554, 704]], T.blue)
   // cord down to her phone
   ctx.strokeStyle = T.blue
   ctx.lineWidth = 5
@@ -357,29 +362,39 @@ function heartPath(ctx, x, y, s) {
   ctx.closePath()
 }
 
+// Repost icon: two curved arrows chasing each other, white with an ink outline.
 function shareIcon(ctx, x, y) {
   ctx.save()
+  ctx.translate(x, y)
+  ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   for (const flip of [1, -1]) {
     ctx.save()
-    ctx.translate(x, y)
     ctx.scale(flip, flip)
+    // the curved shaft, drawn as a thick ink stroke with a white core
+    const shaft = () => {
+      ctx.beginPath()
+      ctx.moveTo(-40, 6)
+      ctx.quadraticCurveTo(-42, -30, -8, -30)
+      ctx.lineTo(14, -30)
+    }
+    shaft()
+    ctx.strokeStyle = K.ink
+    ctx.lineWidth = 24
+    ctx.stroke()
+    // arrowhead
     ctx.beginPath()
-    ctx.moveTo(-38, 8)
-    ctx.lineTo(-38, -20)
-    ctx.quadraticCurveTo(-38, -30, -26, -30)
-    ctx.lineTo(10, -30)
-    ctx.lineTo(10, -50)
-    ctx.lineTo(42, -22)
-    ctx.lineTo(10, 6)
-    ctx.lineTo(10, -12)
-    ctx.lineTo(-20, -12)
-    ctx.lineTo(-20, 8)
+    ctx.moveTo(10, -54)
+    ctx.lineTo(44, -30)
+    ctx.lineTo(10, -6)
     ctx.closePath()
     ctx.fillStyle = '#ffffff'
     ctx.fill()
-    ctx.strokeStyle = K.ink
-    ctx.lineWidth = 7
+    ctx.lineWidth = 6
+    ctx.stroke()
+    shaft()
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 12
     ctx.stroke()
     ctx.restore()
   }

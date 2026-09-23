@@ -138,30 +138,15 @@ function portrait(ctx, t) {
   ctx.strokeStyle = INK
   ctx.lineWidth = 6
 
-  // shirt
-  ctx.fillStyle = SHIRT
-  smooth(ctx, [
-    [-60, 1700], [20, 1664], [70, 1636], [120, 1632], [200, 1676], [296, 1694],
-    [332, 1780], [356, 1900], [370, 2060], [-60, 2060],
-  ])
-  ctx.fill()
-  ctx.stroke()
-  for (const s of [
-    [[70, 1760], [60, 1800], [52, 1840]],
-    [[120, 1790], [112, 1820], [106, 1850]],
-    [[240, 1850], [244, 1890], [250, 1930]],
-    [[168, 1940], [180, 1970], [190, 2010]],
-  ]) brush(ctx, curve(...s), 5)
-
   // far-side hair behind the neck
   ctx.fillStyle = HAIR
   smooth(ctx, LOCK_REST.map(([x, y, w, tip]) => [...flow(x, y, w, t), tip === 's']))
   ctx.fill()
 
-  // neck and face
+  // face, neck and chest in one skin shape
   ctx.fillStyle = SKIN
   ctx.beginPath()
-  ctx.moveTo(110, 1640)
+  ctx.moveTo(40, 1700)
   ctx.lineTo(150, 1400)
   ctx.lineTo(220, 1120)
   ctx.bezierCurveTo(300, 1040, 440, 1050, 470, 1150)
@@ -175,24 +160,63 @@ function portrait(ctx, t) {
   ctx.quadraticCurveTo(498, 1410, 502, 1428) // chin
   ctx.quadraticCurveTo(500, 1462, 450, 1470) // jaw
   ctx.quadraticCurveTo(380, 1478, 330, 1520) // under the jaw
-  ctx.quadraticCurveTo(300, 1580, 298, 1692) // front of the neck
-  ctx.quadraticCurveTo(200, 1676, 110, 1640)
+  ctx.quadraticCurveTo(296, 1600, 300, 1700) // front of the neck
+  ctx.quadraticCurveTo(304, 1760, 320, 1830) // down to the chest
+  ctx.lineTo(40, 1830)
   ctx.closePath()
   ctx.fill()
   ctx.stroke()
-  // redraw the collar line over the neck
+
+  // V-neck T-shirt
+  const shirt = () => {
+    ctx.beginPath()
+    ctx.moveTo(92, 1616) // where the neckline meets the shoulder
+    ctx.quadraticCurveTo(200, 1700, 304, 1812) // down to the point of the V
+    ctx.quadraticCurveTo(334, 1900, 364, 2060) // front of the body
+    ctx.lineTo(-60, 2060)
+    ctx.lineTo(-60, 1690)
+    ctx.quadraticCurveTo(20, 1630, 92, 1616) // top of the shoulder
+    ctx.closePath()
+  }
   ctx.fillStyle = SHIRT
+  shirt()
+  ctx.fill()
+
+  // upper arm below the short sleeve, and the shadow where it meets the body
+  ctx.fillStyle = SKIN
   ctx.beginPath()
-  ctx.moveTo(90, 1634)
-  ctx.quadraticCurveTo(200, 1690, 298, 1694)
-  ctx.lineTo(300, 1760)
-  ctx.lineTo(80, 1760)
+  ctx.moveTo(-60, 1916)
+  ctx.quadraticCurveTo(80, 1912, 180, 1938)
+  ctx.lineTo(186, 2060)
+  ctx.lineTo(-60, 2060)
   ctx.closePath()
   ctx.fill()
+  ctx.fillStyle = INK
   ctx.beginPath()
-  ctx.moveTo(96, 1636)
-  ctx.quadraticCurveTo(200, 1690, 298, 1694)
+  ctx.moveTo(170, 1936)
+  ctx.quadraticCurveTo(196, 1940, 206, 1948)
+  ctx.lineTo(212, 2060)
+  ctx.lineTo(176, 2060)
+  ctx.closePath()
+  ctx.fill()
+
+  // ink lines: shirt outline, sleeve hem, folds
+  ctx.strokeStyle = INK
+  ctx.lineWidth = 6
+  shirt()
   ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(-60, 1914)
+  ctx.quadraticCurveTo(80, 1908, 184, 1936)
+  ctx.stroke()
+  for (const s of [
+    [[94, 1698], [82, 1702], [68, 1712]],
+    [[169, 1737], [172, 1772], [174, 1808]],
+    [[122, 1760], [108, 1792], [94, 1826]],
+    [[51, 1779], [36, 1816], [23, 1854]],
+    [[248, 1817], [244, 1834], [239, 1850]],
+    [[220, 1845], [216, 1868], [211, 1891]],
+  ]) brush(ctx, curve(...s, 8), 5)
 
   // hair: flat colour, crayon grain, soft broken edge
   const hair = HAIR_REST.map(([x, y, w, tip]) => [...flow(x, y, w, t), tip === 's'])

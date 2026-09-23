@@ -3,7 +3,7 @@
 // that turns to 7:00 and rings until it's tapped. Drawn on a 900 x 2000 phone
 // sheet at 0.6 scale, in the cold grey-blue of her mornings. On a phone the whole
 // sheet shows; on a shorter screen the top of the headboard is cropped.
-import { W, UI_FONT, tapHint, rng, clamp, easeOut } from '../paint.js'
+import { W, UI_FONT, tapHint, rng, clamp, easeOut, easeInOut } from '../paint.js'
 import { pop, tone } from '../sound.js'
 
 const SANS = "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
@@ -161,25 +161,25 @@ const PROFILE_UPPER = [[580, 607], [590, 638], [593, 660], [620, 689]]
 const PROFILE_LOWER = [[620, 689], [597, 699], [600, 710], [588, 731], [578, 757], [590, 766], [689, 769]]
 const QUILT = [
   [-40, 1090], [80, 1060], [190, 1030], [330, 1004], [470, 990], [600, 968],
-  [720, 990], [860, 1030], [960, 1060], [960, 1900], [-40, 1900],
+  [720, 990], [860, 1030], [960, 1052], [1016, 1080], [1042, 1140], [1048, 1400], [1046, 1900], [-40, 1900],
 ]
 
 function headboard(ctx) {
   const r = rng(101)
   ctx.fillStyle = K.woodDark
-  ctx.fillRect(-40, 0, 1000, 420)
+  ctx.fillRect(-40, 0, 1046, 420)
   // diagonal band of morning light
   ctx.fillStyle = K.woodLight
   ctx.beginPath()
   ctx.moveTo(-40, 170)
-  ctx.lineTo(960, 360)
-  ctx.lineTo(960, 420)
+  ctx.lineTo(1006, 369)
+  ctx.lineTo(1006, 420)
   ctx.lineTo(-40, 420)
   ctx.closePath()
   ctx.fill()
   // wood grain
   for (let i = 0; i < 70; i++) {
-    const x = r() * 960 - 20
+    const x = r() * 1000 - 20
     const y = 70 + r() * 340
     const lit = y > 170 + ((x + 40) / 1000) * 190
     ctx.strokeStyle = lit ? K.woodGrainLight : K.woodGrain
@@ -302,10 +302,10 @@ function sleeper(ctx) {
 
 function plaid(ctx, base, line) {
   ctx.fillStyle = base
-  ctx.fillRect(-40, 900, 1000, 1000)
+  ctx.fillRect(-40, 900, 1110, 1000)
   ctx.strokeStyle = line
   ctx.lineWidth = 16
-  for (let x = -20; x < 960; x += 112) {
+  for (let x = -20; x < 1070; x += 112) {
     ctx.beginPath()
     ctx.moveTo(x, 960)
     ctx.quadraticCurveTo(x + 18, 1300, x - 6, 1900)
@@ -314,7 +314,7 @@ function plaid(ctx, base, line) {
   for (let y = 1020; y < 1900; y += 96) {
     ctx.beginPath()
     ctx.moveTo(-40, y + 10)
-    ctx.quadraticCurveTo(460, y - 20, 960, y + 14)
+    ctx.quadraticCurveTo(500, y - 20, 1070, y + 14)
     ctx.stroke()
   }
 }
@@ -329,7 +329,7 @@ function quilt(ctx, pts = QUILT) {
   ctx.moveTo(590, 960)
   ctx.quadraticCurveTo(640, 1150, 700, 1400)
   ctx.lineTo(760, 1900)
-  ctx.lineTo(960, 1900)
+  ctx.lineTo(1070, 1900)
   ctx.lineTo(960, 960)
   ctx.closePath()
   ctx.clip()
@@ -344,8 +344,8 @@ function tornBottom(ctx) {
   const r = rng(151)
   ctx.beginPath()
   ctx.moveTo(-40, 0)
-  ctx.lineTo(960, 0)
-  for (let x = 960; x >= -40; x -= 18) {
+  ctx.lineTo(1070, 0)
+  for (let x = 1070; x >= -40; x -= 18) {
     const base = 1455 + ((x + 40) / 1000) * 110 // lower on the right
     ctx.lineTo(x, base + (r() - 0.5) * 22)
   }
@@ -358,7 +358,7 @@ function tornBottom(ctx) {
 const PILLOW2 = [[10, 488], [816, 345], [836, 790], [90, 905]]
 const QUILT2 = [
   [-40, 1088], [100, 1062], [250, 1030], [430, 966], [560, 936], [640, 956], [760, 996],
-  [899, 1030], [960, 1050], [960, 1900], [-40, 1900],
+  [899, 1030], [960, 1052], [1016, 1080], [1042, 1140], [1048, 1400], [1046, 1900], [-40, 1900],
 ]
 const AWAKE = {
   // chest, shoulders and the arm lying across her, down to the quilt
@@ -417,8 +417,9 @@ function strap(ctx, x1, y1, x2, y2) {
 function awake(ctx) {
   const A = AWAKE
   ctx.fillStyle = K.sheet
-  ctx.fillRect(-40, 420, 1000, 1500)
-  ink(ctx, [[-40, 420], [960, 420]], 7)
+  ctx.fillRect(-40, 420, 996, 1500)
+  ink(ctx, [[-40, 420], [930, 420]], 7)
+  bedEnd(ctx)
 
   // pillow, grey where her head presses in, with a lit edge on the right
   const pillow2 = () => {
@@ -532,6 +533,36 @@ function awake(ctx) {
 
 }
 
+// The end of the bed, just past the right edge of the screen: the mattress's
+// rounded corner, the wooden side of the bed frame, and the wall behind it.
+function bedEnd(ctx) {
+  ctx.fillStyle = K.sheet
+  ctx.fillRect(1006, 0, 70, 1900)
+  ink(ctx, [[1006, 0], [1006, 600], [1006, 1090]], 7)
+  // bed frame side
+  ctx.fillStyle = K.woodDark
+  ctx.fillRect(961, 424, 45, 666)
+  const r = rng(181)
+  ctx.strokeStyle = K.woodGrain
+  for (let i = 0; i < 7; i++) {
+    const x = 966 + r() * 36
+    ctx.lineWidth = 2 + r() * 2
+    ctx.beginPath()
+    ctx.moveTo(x, 440 + r() * 40)
+    ctx.lineTo(x + (r() - 0.5) * 4, 900 + r() * 180)
+    ctx.stroke()
+  }
+  // mattress corner and edge
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 7
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(930, 420)
+  ctx.arcTo(958, 420, 958, 460, 22)
+  ctx.lineTo(958, 1080)
+  ctx.stroke()
+}
+
 function bedScene(ctx, t, ringing, awakeK) {
   ctx.save()
   tornBottom(ctx)
@@ -539,8 +570,9 @@ function bedScene(ctx, t, ringing, awakeK) {
   headboard(ctx)
   // mattress under everything
   ctx.fillStyle = K.sheet
-  ctx.fillRect(-40, 420, 1000, 1500)
-  ink(ctx, [[-40, 420], [960, 420]], 7)
+  ctx.fillRect(-40, 420, 996, 1500)
+  ink(ctx, [[-40, 420], [930, 420]], 7)
+  bedEnd(ctx)
   for (const s of [[[-10, 920], [60, 900], [120, 890]], [[780, 900], [860, 890], [920, 910]]]) ink(ctx, s, 4)
   if (awakeK < 1) sleeper(ctx)
   if (awakeK > 0) {
@@ -729,12 +761,77 @@ function clockPanel(ctx, alpha, digits, flip, ringing, t, changing) {
   ctx.restore()
 }
 
+// Close-up of the clock's face: four split flaps, big, e.g. "07:28".
+// Drawn in the close-up panel's own coordinates (same as the phone sheet).
+function bigDisplay(ctx, text, foldCell, fold) {
+  ctx.save()
+  ctx.lineJoin = 'round'
+  ctx.fillStyle = '#484948'
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 12
+  ctx.beginPath()
+  ctx.roundRect(172, 900, 650, 255, 26)
+  ctx.fill()
+  ctx.stroke()
+  const cells = [205, 350, 522, 667]
+  cells.forEach((x, i) => {
+    ctx.fillStyle = '#474847'
+    ctx.strokeStyle = K.ink
+    ctx.lineWidth = 6
+    ctx.beginPath()
+    ctx.rect(x, 922, 123, 210)
+    ctx.fill()
+    ctx.stroke()
+    ctx.save()
+    ctx.translate(x + 62, 1030)
+    if (i === foldCell) ctx.scale(1, Math.abs(Math.cos(fold * Math.PI)))
+    ctx.scale(0.8, 1) // the clock's digits are narrower than the font's
+    ctx.fillStyle = '#f4f4f4'
+    ctx.font = `700 172px ${SANS}`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text[i], 0, 8)
+    ctx.restore()
+    ctx.strokeStyle = '#111111'
+    ctx.lineWidth = 5
+    ctx.beginPath()
+    ctx.moveTo(x, 1028)
+    ctx.lineTo(x + 123, 1028)
+    ctx.stroke()
+  })
+  ctx.fillStyle = '#f4f4f4'
+  for (const y of [1000, 1052]) {
+    ctx.beginPath()
+    ctx.arc(498, y, 11, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.restore()
+}
+
+// Heavy hand-drawn panel border, full height.
+function border(ctx, x, top, bottom) {
+  const r = rng(191)
+  ctx.fillStyle = K.ink
+  ctx.beginPath()
+  ctx.moveTo(x, top)
+  for (let y = top; y <= bottom; y += 40) ctx.lineTo(x + (r() - 0.5) * 3, y)
+  for (let y = bottom; y >= top; y -= 40) ctx.lineTo(x + 15 + (r() - 0.5) * 3, y)
+  ctx.closePath()
+  ctx.fill()
+}
+
 // Sheet rows 58..2000 are a phone screen; show from the top when there is room,
 // otherwise crop the headboard so the clock panel (to row 1790) stays in view.
 const sheetTop = (height) => Math.max(58, 1790 - height / 0.6)
 
 // 6:59 flips to 7:00 and the alarm rings. Tap it: she snoozes and rolls over,
-// the clock flips to 7:15 and rings again. Tap again and she gets up.
+// the clock flips to 7:15 and rings again. Tap it again and she drifts off: the
+// camera pans past the end of the bed to a close-up of the clock, whose minutes
+// tick on to 07:28. She's late. Tap to go on.
+const PAN = 1000 // how far the camera travels, in sheet units
+const PANEL_X = 1076 // where the close-up panel starts, in sheet units
+const LATE = 28 // the minute she finally wakes at
+
 export default function wakeUp(api) {
   const FLIP_AT = 1.6
   let snoozedAt = null
@@ -757,6 +854,13 @@ export default function wakeUp(api) {
       awakeK: easeOut((t - snoozedAt - 0.3) / 0.7),
     }
   }
+  // the pan and the minutes ticking on in the close-up
+  const panAt = (t) => (stoppedAt === null ? 0 : easeInOut((t - stoppedAt - 0.5) / 1.4) * PAN)
+  const countStart = () => stoppedAt + 2.2
+  const TICK = 0.16
+  const minuteAt = (t) => Math.min(LATE, 15 + Math.max(0, Math.floor((t - countStart()) / TICK)))
+  const countDone = (t) => stoppedAt !== null && t > countStart() + (LATE - 15) * TICK + 0.4
+
   return {
     tall: true,
     // test hook: where to tap to stop the alarm
@@ -769,20 +873,35 @@ export default function wakeUp(api) {
         lastBeep = t
         tone(1320, 0.14, { type: 'square', gain: 0.03 })
       }
+      const pan = panAt(t)
+      const clockAlpha = easeOut((t - 0.5) / 0.6) * (stoppedAt === null ? 1 : 1 - easeOut((t - stoppedAt) / 0.35))
       ctx.save()
       ctx.scale(0.6, 0.6)
-      ctx.translate(0, -sheetTop(api.height()))
+      ctx.translate(-pan, -sheetTop(api.height()))
       bedScene(ctx, t, st.ringing, st.awakeK)
-      clockPanel(ctx, easeOut((t - 0.5) / 0.6), st.digits, st.flip, st.ringing, t, st.changing)
+      if (clockAlpha > 0) clockPanel(ctx, clockAlpha, st.digits, st.flip, st.ringing, t, st.changing)
       nameLabel(ctx, easeOut((t - 0.9) / 0.6))
+      if (stoppedAt !== null) {
+        // the close-up panel to the right of the bedroom
+        const top = sheetTop(api.height())
+        const bottom = top + api.height() / 0.6
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(PANEL_X - 6, top, 1000, bottom - top)
+        border(ctx, PANEL_X - 15, top, bottom)
+        const m = minuteAt(t)
+        const tick = (t - countStart()) / TICK
+        const ticking = m < LATE && tick > 0
+        ctx.translate(PAN, 0)
+        bigDisplay(ctx, `07${String(m).padStart(2, '0')}`, ticking ? 3 : -1, ticking ? tick % 1 : 0)
+      }
       ctx.restore()
       const ringSince = snoozedAt === null ? FLIP_AT : snoozedAt + 1.45
       if (st.ringing && t > ringSince + 2.5) tapHint(ctx, W / 2, toScreen(1400), t, K.ink)
-      if (stoppedAt !== null) tapHint(ctx, 50, 50, t)
+      if (countDone(t)) tapHint(ctx, 50, 50, t)
     },
     down(x, y, t) {
       if (stoppedAt !== null) {
-        if (t - stoppedAt > 0.5) api.finish()
+        if (countDone(t)) api.finish()
         return
       }
       if (!inClock(y) || !state(t).ringing) return

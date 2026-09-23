@@ -8,7 +8,7 @@ import { pop, tone } from '../sound.js'
 
 const SANS = "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
 
-const K = {
+export const K = {
   ink: '#141414',
   woodDark: '#5e6f80',
   woodLight: '#c3d2e1',
@@ -32,7 +32,7 @@ const K = {
 }
 
 // Tapered ink stroke through points.
-function ink(ctx, pts, width = 6, color = K.ink) {
+export function ink(ctx, pts, width = 6, color = K.ink) {
   ctx.strokeStyle = color
   ctx.lineCap = 'round'
   for (let i = 0; i < pts.length - 1; i++) {
@@ -65,7 +65,7 @@ function line(ctx, pts, width = 6) {
 
 // Smooth closed shape through points ([x, y] or [x, y, 's'] for a sharp corner);
 // fills and/or strokes it in ink.
-function shape(ctx, pts, fill, stroke = K.ink, width = 6) {
+export function shape(ctx, pts, fill, stroke = K.ink, width = 6) {
   const n = pts.length
   const mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2]
   ctx.beginPath()
@@ -109,7 +109,7 @@ function pillowPath(ctx) {
 
 // Fill `inner` only where it overlaps `outer` (e.g. shadow on the pillow).
 // `outer` is a point list or a function that builds a path.
-function shadeInside(ctx, outer, inner, color) {
+export function shadeInside(ctx, outer, inner, color) {
   ctx.save()
   if (typeof outer === 'function') outer(ctx)
   else shape(ctx, outer, null, null)
@@ -763,7 +763,7 @@ function clockPanel(ctx, alpha, digits, flip, ringing, t, changing) {
 
 // Close-up of the clock's face: four split flaps, big, e.g. "07:28".
 // Drawn in the close-up panel's own coordinates (same as the phone sheet).
-function bigDisplay(ctx, text, foldCell, fold) {
+export function bigDisplay(ctx, text, foldCell, fold) {
   ctx.save()
   ctx.lineJoin = 'round'
   ctx.fillStyle = '#484948'
@@ -809,7 +809,7 @@ function bigDisplay(ctx, text, foldCell, fold) {
 }
 
 // Heavy hand-drawn panel border, full height.
-function border(ctx, x, top, bottom) {
+export function border(ctx, x, top, bottom) {
   const r = rng(191)
   ctx.fillStyle = K.ink
   ctx.beginPath()
@@ -822,7 +822,7 @@ function border(ctx, x, top, bottom) {
 
 // Sheet rows 58..2000 are a phone screen; show from the top when there is room,
 // otherwise crop the headboard so the clock panel (to row 1790) stays in view.
-const sheetTop = (height) => Math.max(58, 1790 - height / 0.6)
+export const sheetTop = (height) => Math.max(58, 1790 - height / 0.6)
 
 // 6:59 flips to 7:00 and the alarm rings. Tap it: she snoozes and rolls over,
 // the clock flips to 7:15 and rings again. Tap it again and she drifts off: the

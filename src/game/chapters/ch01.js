@@ -1,120 +1,11 @@
-// Chapter 1 · Morning — the alarm (ch01-wake.js), the toothbrush, the same grey day again.
+// Chapter 1 · Morning — the alarm (ch01-wake.js), brushing teeth (ch01-brush.js),
+// the same grey day again.
 import { vignette } from '../engine.js'
-import {
-  W, H, C, paper, wash, blob, text, tapHint, panel, label,
-  mira, person, rng, clamp, easeOut, lerp,
-} from '../paint.js'
-import { pop } from '../sound.js'
+import { W, H, C, paper, wash, blob, panel, mira, person, easeOut } from '../paint.js'
 import wakeUp from './ch01-wake.js'
+import brushTeeth from './ch01-brush.js'
 
 const GREY = 0.65 // Mira's colour is mostly drained in Act I
-
-// Drag back and forth across the teeth. Foam builds up; enough strokes and she's done.
-const brush = (api) => {
-  const NEEDED = 14
-  let strokes = 0
-  let lastDir = 0
-  let brushX = 270
-  let dragging = false
-  let lastX = 0
-  let doneAt = null
-  const foam = []
-  const r = rng(12)
-  return {
-    draw(ctx, t) {
-      paper(ctx, '#3b3f4a')
-      // bathroom mirror close-up, as one big panel
-      panel(ctx, 20, 20, W - 40, 720, (ctx, w, h) => {
-        wash(ctx, 0, 0, w, h, '#cfd3d4', 110)
-        wash(ctx, 30, 60, w - 60, 620, '#e3e6e6', 111)
-      })
-      ctx.save()
-      ctx.beginPath()
-      ctx.rect(20, 20, W - 40, 720)
-      ctx.clip()
-      // face, big
-      ctx.save()
-      ctx.translate(W / 2, 400)
-      blob(ctx, 0, 0, 170, 200, C.skin1, 112)
-      ctx.fillStyle = C.miraHair
-      ctx.beginPath()
-      ctx.ellipse(0, -90, 175, 125, 0, Math.PI, Math.PI * 2)
-      ctx.fill()
-      ctx.fillRect(-175, -92, 34, 150)
-      ctx.fillRect(141, -92, 34, 150)
-      ctx.beginPath()
-      ctx.arc(60, -225, 55, 0, Math.PI * 2)
-      ctx.fill()
-      // sleepy eyes
-      ctx.strokeStyle = C.ink
-      ctx.lineWidth = 5
-      for (const d of [-1, 1]) {
-        ctx.beginPath()
-        ctx.arc(d * 60, -20, 20, 0.2, Math.PI - 0.2)
-        ctx.stroke()
-      }
-      // mouth with teeth
-      ctx.fillStyle = '#7a3b3b'
-      ctx.beginPath()
-      ctx.ellipse(0, 100, 90, 42, 0, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = C.cream
-      ctx.fillRect(-72, 76, 144, 26)
-      ctx.restore()
-
-      for (const f of foam) blob(ctx, f.x, f.y, f.r, f.r * 0.8, '#ffffff', f.s, 0.9)
-
-      // toothbrush follows the finger
-      const bx = brushX
-      wash(ctx, bx + 30, 486, 260, 26, '#7fb3c9', 113)
-      wash(ctx, bx - 20, 470, 60, 30, '#f5f5f5', 114)
-      ctx.restore()
-      ctx.strokeStyle = C.ink
-      ctx.lineWidth = 5
-      ctx.strokeRect(20, 20, W - 40, 720)
-
-      const p = clamp(strokes / NEEDED, 0, 1)
-      wash(ctx, 80, 780, (W - 160) * p + 1, 18, C.teal, 115)
-      ctx.strokeStyle = C.cream
-      ctx.lineWidth = 2
-      ctx.strokeRect(80, 780, W - 160, 18)
-      if (doneAt === null) {
-        text(ctx, 'drag side to side to brush', W / 2, 850, { size: 28, color: C.cream })
-        if (!dragging) tapHint(ctx, bx, 490, t)
-      } else {
-        label(ctx, 'Brush. Rinse. Repeat.', W / 2, 740, easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, 50, 50, t)
-      }
-    },
-    down(x, y, t) {
-      if (doneAt !== null) {
-        if (t - doneAt > 0.6) api.finish()
-        return
-      }
-      dragging = true
-      lastX = x
-    },
-    move(x, y, t) {
-      if (!dragging || doneAt !== null) return
-      brushX = clamp(lerp(brushX, x, 0.6), 160, 380)
-      const dx = x - lastX
-      if (Math.abs(dx) > 12) {
-        const dir = Math.sign(dx)
-        if (dir !== lastDir) {
-          lastDir = dir
-          strokes += 1
-          pop(200 + strokes * 20)
-          foam.push({ x: 200 + r() * 140, y: 470 + r() * 50, r: 12 + r() * 16, s: strokes })
-          if (strokes >= NEEDED) doneAt = t
-        }
-        lastX = x
-      }
-    },
-    up() {
-      dragging = false
-    },
-  }
-}
 
 const leaving = vignette((ctx, t) => {
   paper(ctx, '#3b3f4a')
@@ -143,5 +34,5 @@ const leaving = vignette((ctx, t) => {
 
 export default {
   title: 'Morning',
-  pages: [wakeUp, brush, leaving],
+  pages: [wakeUp, brushTeeth, leaving],
 }

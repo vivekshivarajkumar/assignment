@@ -124,7 +124,7 @@ const talk = bubblePuzzle({
     { speaker: 'arun', pieces: 1, icon: icons.laugh },
     { speaker: 'mira', pieces: 1, icon: icons.coffee },
   ],
-  caption: 'Two refills later, the words came easily.',
+  caption: 'By the second cup, it was easy.',
 })
 
 // Evening street. They walk apart; tap Mira and she looks back — so does he.
@@ -186,7 +186,7 @@ const walkHome = (api) => {
         tapHint(ctx, mx, 410, t, C.cream)
       }
       if (doneAt !== null) {
-        caption(ctx, 'At the same moment, both looked back.', easeOut((t - doneAt) / 0.6))
+        caption(ctx, 'Both of them looked back.', easeOut((t - doneAt) / 0.6))
         tapHint(ctx, W - 50, 50, t, C.cream)
       }
       if (lookAt !== null && doneAt === null && t - lookAt > 1) doneAt = t

@@ -178,9 +178,18 @@ const feed = (api) => {
       ctx.lineWidth = 14
       ctx.strokeRect(-10, 90, W + 20, 190)
       ctx.restore()
-      // her mustard sleeves, washed out, and the phone
-      wash(ctx, -20, 640, 170, 330, '#b9ab8f', 218)
-      wash(ctx, 390, 640, 170, 330, '#b9ab8f', 219)
+      // her mustard sleeves, washed out, reaching up to the phone
+      ctx.save()
+      ctx.strokeStyle = '#b9ab8f'
+      ctx.lineCap = 'round'
+      ctx.lineWidth = 110
+      ctx.beginPath()
+      ctx.moveTo(10, 1040)
+      ctx.lineTo(90, 720)
+      ctx.moveTo(530, 1040)
+      ctx.lineTo(450, 720)
+      ctx.stroke()
+      ctx.restore()
       phone(ctx, SCREEN.x - 8, SCREEN.y - 16, SCREEN.w + 16, SCREEN.h + 32, '#f2f1ee')
       ctx.save()
       ctx.beginPath()
@@ -201,7 +210,7 @@ const feed = (api) => {
 
       // likes so far
       for (let i = 0; i < NEEDED; i++) {
-        heart(ctx, W / 2 - 122 + i * 35, 800, 0.55, i < liked.size ? 'rgb(190,150,150)' : C.greyDark)
+        heart(ctx, W / 2 - 122 + i * 35, 792, 0.55, i < liked.size ? 'rgb(190,150,150)' : C.greyDark)
       }
       if (doneAt === null) {
         text(ctx, 'scroll up and like the posts', W / 2, 40, { size: 30, color: C.ink })
@@ -255,11 +264,24 @@ const feed = (api) => {
 function platform(ctx, w, h, t) {
   wash(ctx, -10, -10, w + 20, h + 20, '#d6d5d3', 230)
   city(ctx, 0, 20, w, 120, 0, 231)
-  wash(ctx, -10, 130, w + 20, 130, '#a7a4a0', 232) // the train
-  for (let i = 0; i < 4; i++) wash(ctx, 20 + i * 115, 150, 80, 50, '#c9cccf', 233 + i)
-  const open = easeOut((t - 0.3) / 0.8) * 22
-  wash(ctx, 190 - open, 150, 38, 110, '#8f8b87', 237)
-  wash(ctx, 232 + open, 150, 38, 110, '#8f8b87', 238)
+  wash(ctx, -10, 118, w + 20, 142, '#a7a4a0', 232) // the train
+  line(ctx, 0, 124, w, 124, '#8e8a86', 6, 249)
+  line(ctx, 0, 222, w, 222, '#bdbab6', 5, 250)
+  for (const wx of [20, 90, 320, 390]) {
+    wash(ctx, wx, 144, 56, 44, '#c9cccf', 233 + wx)
+    ctx.strokeStyle = C.inkSoft
+    ctx.lineWidth = 3
+    ctx.strokeRect(wx, 144, 56, 44)
+  }
+  // the doors slide open onto a dark carriage
+  const open = easeOut((t - 0.3) / 0.8) * 40
+  ctx.fillStyle = '#5f5b58'
+  ctx.fillRect(180, 138, 100, 118)
+  wash(ctx, 180 - open, 138, 50, 118, '#8f8b87', 237)
+  wash(ctx, 230 + open, 138, 50, 118, '#8f8b87', 238)
+  ctx.strokeStyle = C.ink
+  ctx.lineWidth = 3
+  ctx.strokeRect(180, 138, 100, 118)
   wash(ctx, -10, 255, w + 20, 60, C.greyDark, 239)
   line(ctx, 0, 262, w, 262, '#d8d3cc', 5, 240)
   // station sign with nothing worth reading on it

@@ -302,13 +302,20 @@ const paintSet = (api) => {
       paper(ctx)
       // under the bed: the frame and a band of shadow; the floor in the light below
       wash(ctx, 0, 0, W, 460, '#3f3b45', 1791)
-      wash(ctx, 0, 0, W, 60, g('#7b5238'), 1792)
-      wash(ctx, 60, 40, 24, 420, g('#5c3c2a'), 1793)
-      wash(ctx, 456, 40, 24, 420, g('#5c3c2a'), 1794)
       wash(ctx, 0, 440, W, 520, g('#9c7f63'), 1795)
       for (let i = 0; i < 5; i++) line(ctx, 0, 520 + i * 90, W, 516 + i * 90, 'rgba(60,40,30,0.2)', 2, 1796 + i)
-      blob(ctx, 170, 400, 24, 12, '#6d6570', 1801, 0.6)
-      blob(ctx, 250, 420, 16, 8, '#6d6570', 1802, 0.6)
+      // what else lives under a bed: dust, a lost sock, an old shoebox
+      wash(ctx, 40, 300, 150, 90, '#57525c', 1819)
+      line(ctx, 40, 330, 190, 330, '#6d6570', 3, 1820)
+      blob(ctx, 230, 420, 22, 10, '#8e8983', 1801, 0.7)
+      blob(ctx, 480, 430, 16, 8, '#8e8983', 1802, 0.7)
+      wash(ctx, 150, 404, 60, 20, mix(C.mira, '#3f3b45', 0.6), 1821)
+      // bed frame, legs and the blanket hanging over the edge
+      wash(ctx, 0, 0, W, 90, g('#7b5238'), 1792)
+      wash(ctx, 20, 60, 30, 390, g('#5c3c2a'), 1793)
+      wash(ctx, 490, 60, 30, 390, g('#5c3c2a'), 1794)
+      wash(ctx, -10, -20, W + 20, 70, g(C.sky, 0.6), 1822)
+      for (let i = 0; i < 9; i++) line(ctx, 20 + i * 62, 44, 24 + i * 62, 62, g(C.sky, 0.7), 5, 1823 + i)
 
       if (outAt !== null && !drag) {
         box.x = lerp(box.x, HOME.x, clamp(dt * 8, 0, 1))
@@ -340,13 +347,13 @@ const paintSet = (api) => {
       ctx.restore()
 
       if (outAt === null) {
-        text(ctx, 'pull it out into the light', W / 2, 520, { size: 30, color: C.cream })
+        text(ctx, 'pull it out into the light', W / 2, 540, { size: 30, color: C.ink })
         if (!drag && t > 0.8) tapHint(ctx, box.x, box.y, t, C.cream)
       } else if (openedAt === null) {
         text(ctx, 'tap to open it', W / 2, 820, { size: 30, color: C.ink })
         tapHint(ctx, box.x, box.y, t)
       } else {
-        caption(ctx, "His gift. She hadn't opened it since spring.", easeOut((t - openedAt - 0.8) / 0.6))
+        caption(ctx, "His birthday gift. She hadn't touched it since.", easeOut((t - openedAt - 0.8) / 0.6))
         if (t - openedAt > 1.2) tapHint(ctx, W - 50, 50, t)
       }
     },

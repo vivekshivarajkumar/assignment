@@ -8,6 +8,28 @@ import {
 import { pop, tone, MELODY } from '../sound.js'
 
 const fade = (t, t0) => easeOut((t - t0) / 0.5)
+
+// Fades a whole drawing (a panel, a label) in as one piece. Washes set their own
+// alpha, so fading panel() directly would show its background before its contents.
+let scratch = null
+function faded(ctx, alpha, draw) {
+  if (alpha <= 0) return
+  if (alpha >= 1) return draw(ctx)
+  if (!scratch) {
+    scratch = document.createElement('canvas')
+    scratch.width = W * 2
+    scratch.height = H * 2
+  }
+  const g = scratch.getContext('2d')
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.clearRect(0, 0, scratch.width, scratch.height)
+  g.setTransform(2, 0, 0, 2, 0, 0)
+  draw(g)
+  ctx.save()
+  ctx.globalAlpha *= alpha
+  ctx.drawImage(scratch, 0, 0, W, H)
+  ctx.restore()
+}
 const WOOD = '#9a6a44'
 const SUN = '#f2c14e'
 
@@ -342,8 +364,8 @@ function nervous(ctx, w, h, t) {
 
 const opening = vignette((ctx, t) => {
   panel(ctx, 20, 20, W - 40, 500, (ctx, w, h) => facade(ctx, w, h, t))
-  label(ctx, 'One year later', W / 2, 520, fade(t, 0.4))
-  panel(ctx, 20, 570, W - 40, 220, (ctx, w, h) => nervous(ctx, w, h, t), { alpha: fade(t, 1.2) })
+  faded(ctx, fade(t, 0.4), (g) => label(g, 'One year later', W / 2, 520))
+  faded(ctx, fade(t, 1.2), (g) => panel(g, 20, 570, W - 40, 220, (ctx, w, h) => nervous(ctx, w, h, t)))
 }, 'Her first exhibition. Her name on the door.', { wait: 1.4 })
 
 // ---------- page 2: walk through the room ----------
@@ -353,6 +375,7 @@ const walk = (api) => {
   let vel = 0
   let dragging = false
   let lastX = 0
+  let lastT = 0
   let downX = 0
   let phase = 0
   let facing = 1
@@ -408,15 +431,18 @@ const walk = (api) => {
       }
       dragging = true
       lastX = x
+      lastT = t
       downX = x
       vel = 0
     },
-    move(x) {
+    move(x, y, t) {
       if (!dragging || doneAt !== null) return
       const d = (lastX - x) * 1.3
+      const span = Math.max(1 / 60, t - lastT)
       lastX = x
+      lastT = t
       scrollBy(d)
-      vel = lerp(vel, d * 60, 0.4)
+      vel = clamp(lerp(vel, d / span, 0.5), -1400, 1400)
     },
     up(x) {
       if (!dragging) return
@@ -465,15 +491,15 @@ const song = (api) => {
           note(ctx, x, y, 0.8, C.arun, clamp(1 - (age - 2) / 1.2, 0, 1) * clamp(age * 3, 0, 1))
         })
       })
-      label(ctx, 'From the street...', W / 2, 540, fade(t, 1.2))
-      panel(ctx, 20, 590, W - 40, 200, (ctx, w, h) => {
+      faded(ctx, fade(t, 1.2), (g) => label(g, 'From the street...', W / 2, 540))
+      faded(ctx, fade(t, 3.2), (g) => panel(g, 20, 590, W - 40, 200, (ctx, w, h) => {
         wash(ctx, -10, -10, w + 20, h + 20, '#f7e3c4', 2055)
         blob(ctx, 400, 60, 130, 90, '#fff3c4', 2056, 0.6)
         mira(ctx, 150, 735, { s: 2.2, eyes: 'closed', mouth: 'smile' })
         for (let i = 0; i < 3; i++) {
           note(ctx, 330 + i * 50, 120 - i * 26 + Math.sin(t * 2 + i) * 8, 0.9, C.arun)
         }
-      }, { alpha: fade(t, 3.2) })
+      }))
       if (t > 3.6) {
         caption(ctx, 'A song she knew by heart. She smiled.', easeOut((t - 3.6) / 0.6))
         tapHint(ctx, W - 50, 50, t)

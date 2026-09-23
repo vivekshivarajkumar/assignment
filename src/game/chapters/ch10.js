@@ -3,7 +3,7 @@
 import { vignette } from '../engine.js'
 import {
   W, H, C, paper, wash, blob, line, text, caption, tapHint, windowFrame,
-  mira, arun, plant, heart, panel, label, dist, clamp, lerp, easeOut, inRect,
+  mira, arun, plant, heart, panel, label, dist, clamp, lerp, easeOut,
 } from '../paint.js'
 import { pop, tone, MELODY } from '../sound.js'
 
@@ -139,7 +139,7 @@ for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++) SLOTS.push([
 const HERS = ['binders', 'clock', 'books', 'vase', 'frame', 'mug', 'calculator', 'candle', 'cactus']
 const HIS = ['metronome', 'records', 'plant', 'music']
 const STORE = { x: 40, y: 720, w: 200, h: 150 }
-const HOME = [[330, 740], [450, 740], [330, 880], [450, 880]] // his things, in his open box
+const HOME = [[335, 745], [450, 745], [335, 880], [450, 880]] // his things, on his open box
 
 function shelfFrame(ctx) {
   wash(ctx, 50, 150, 440, 460, '#8a5a3c', 1080)
@@ -215,17 +215,19 @@ const shelf = (api) => {
       wash(ctx, STORE.x + STORE.w - 30, STORE.y, 40, 20, '#b08a52', 1095)
       wash(ctx, STORE.x + 60, STORE.y + 70, 80, 16, C.cream, 1096, 0.8)
 
-      // his open box and the things still in it
-      wash(ctx, 280, 760, 220, 150, '#b08a52', 1097)
+      // his open box, flaps up, with the things still waiting on it
+      wash(ctx, 280, 650, 220, 250, '#9c7646', 1097)
+      wash(ctx, 270, 630, 50, 40, '#b08a52', 1099)
+      wash(ctx, 460, 630, 50, 40, '#b08a52', 1090)
+      wash(ctx, 290, 760, 200, 16, '#b08a52', 1091, 0.8)
       for (const h of loose()) if (h !== drag) drawThing(ctx, h.kind, h.x, h.y, 0.85)
-      wash(ctx, 280, 800, 220, 110, '#c9a46a', 1098)
-      for (const h of loose()) if (h !== drag && h.y < 800) drawThing(ctx, h.kind, h.x, h.y, 0.85)
+      wash(ctx, 276, 880, 228, 34, '#c9a46a', 1098)
       if (drag) drawThing(ctx, drag.kind, drag.x, drag.y, 1.05)
 
       if (doneAt === null) {
         const e = empty()
-        const msg = e < 0 ? 'the shelf is full: tap some of her things' : 'drag his things onto the shelf'
-        text(ctx, msg, W / 2, 80, { size: 27, color: C.inkSoft, maxWidth: 360 })
+        const msg = e < 0 ? 'tap her things to make room' : 'drag his things onto the shelf'
+        text(ctx, msg, W / 2, 90, { size: 30, color: C.inkSoft })
         if (t - fullAt < 1.2) {
           text(ctx, 'the box is full', W / 2, 690, { size: 26, color: C.arun, alpha: 1 - (t - fullAt) / 1.2 })
         }
@@ -307,9 +309,11 @@ const arrive = vignette((ctx, t) => {
     arun(c, 420, 380, { s: 0.85, facing: -1, pose: 'wave', t, mouth: 'smile' })
     // violin case on his back
     c.save()
-    c.translate(452, 230)
-    c.rotate(0.35)
-    blob(c, 0, 0, 16, 60, '#5c3c2a', 1107)
+    c.translate(455, 240)
+    c.rotate(0.3)
+    blob(c, 0, 26, 22, 34, '#5c3c2a', 1107)
+    blob(c, 0, -22, 15, 24, '#5c3c2a', 1122)
+    wash(c, -5, -70, 10, 30, '#5c3c2a', 1123)
     c.restore()
     mira(c, 150, 380, { s: 0.85, mouth: 'smile' })
   })
@@ -321,17 +325,28 @@ const arrive = vignette((ctx, t) => {
     blob(c, 200, 110, 34, 26, C.skin1, 1110)
     wash(c, 300, 90, 200, 50, '#50627a', 1111)
     blob(c, 290, 116, 34, 26, C.skin2, 1112)
+    // cuffs
+    wash(c, 150, 86, 16, 58, C.cream, 1124)
+    wash(c, 318, 86, 16, 58, '#3e4d61', 1125)
+    // the key travels from her fingers to his, big and shiny
     const k = easeOut((t - 1.3) / 0.6)
-    const kx = lerp(228, 262, k)
     c.save()
+    c.translate(lerp(222, 262, k), 70)
+    c.rotate(-0.2)
     c.strokeStyle = C.mira
-    c.lineWidth = 5
+    c.lineWidth = 7
     c.beginPath()
-    c.arc(kx, 100, 12, 0, Math.PI * 2)
+    c.arc(0, 0, 18, 0, Math.PI * 2)
     c.stroke()
+    c.fillStyle = '#b9b09c'
+    c.beginPath()
+    c.arc(26, 8, 14, 0, Math.PI * 2)
+    c.fill()
+    c.fillRect(34, 4, 44, 9)
+    c.fillRect(62, 12, 7, 10)
+    c.fillRect(72, 12, 6, 8)
     c.restore()
-    wash(c, kx + 8, 94, 40, 10, '#c9c2b0', 1113)
-    wash(c, kx + 36, 102, 8, 10, '#c9c2b0', 1114)
+    if (k >= 1) heart(c, 245, 190 - (t - 1.9) * 10, 0.8, C.rose)
   })
 }, 'Three boxes, one violin, and a key.', { wait: 1.8 })
 
@@ -341,8 +356,15 @@ const home = (api) => vignette((ctx, t) => {
   const kinds = api.memory.shelf ?? DEFAULT_SHELF
   panel(ctx, 30, 100, 480, 380, (c, w) => {
     wash(c, -10, -10, w + 20, 400, '#efd9b5', 1115)
+    wash(c, -10, 330, w + 20, 60, '#b9926c', 1126)
+    // the violin case leans on one side, her lamp stands on the other
+    blob(c, 50, 300, 22, 32, '#5c3c2a', 1127)
+    blob(c, 50, 252, 15, 22, '#5c3c2a', 1128)
+    line(c, 430, 340, 430, 150, C.ink, 4, 1129)
+    blob(c, 430, 140, 30, 22, C.mira, 1130)
+    blob(c, 430, 180, 60, 50, '#fff3c4', 1131, 0.35)
     c.save()
-    c.translate(240, 160)
+    c.translate(240, 175)
     c.scale(0.72, 0.72)
     c.translate(-270, -380)
     shelfFrame(c)
@@ -352,7 +374,9 @@ const home = (api) => vignette((ctx, t) => {
   label(ctx, 'Home', 270, 480, fade(t, 0.3))
   reveal(ctx, t, 0.9, 30, 520, 480, 230, (c, w, h) => {
     wash(c, -10, -10, w + 20, h + 20, '#35365a', 1116)
-    blob(c, 420, 40, 60, 50, '#fff3c4', 1117, 0.35) // lamp light
+    blob(c, 440, 60, 90, 80, '#f7d27a', 1117, 0.25) // lamp light
+    line(c, 440, 220, 440, 60, C.ink, 4, 1132)
+    blob(c, 440, 50, 26, 18, C.mira, 1133)
     wash(c, 60, 130, 380, 90, '#6d7f92', 1118) // sofa
     wash(c, 50, 100, 380, 50, '#7f91a3', 1119)
     blob(c, 110, 130, 28, 22, C.mira, 1120) // cushions

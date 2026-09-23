@@ -8,6 +8,28 @@ import {
 import { pop, tone } from '../sound.js'
 
 const fade = (t, t0) => easeOut((t - t0) / 0.5)
+
+// Fades a whole drawing (a panel, a label) in as one piece. Washes set their own
+// alpha, so fading panel() directly would show its background before its contents.
+let scratch = null
+function faded(ctx, alpha, draw) {
+  if (alpha <= 0) return
+  if (alpha >= 1) return draw(ctx)
+  if (!scratch) {
+    scratch = document.createElement('canvas')
+    scratch.width = W * 2
+    scratch.height = H * 2
+  }
+  const g = scratch.getContext('2d')
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.clearRect(0, 0, scratch.width, scratch.height)
+  g.setTransform(2, 0, 0, 2, 0, 0)
+  draw(g)
+  ctx.save()
+  ctx.globalAlpha *= alpha
+  ctx.drawImage(scratch, 0, 0, W, H)
+  ctx.restore()
+}
 const WOOD = '#9a6a44'
 
 // ---------- page 1: Sunday morning ----------
@@ -100,8 +122,8 @@ function paintTin(ctx, w, h) {
 const morning = vignette((ctx, t) => {
   const g = 0.5 * (1 - easeOut((t - 0.6) / 2.2))
   panel(ctx, 20, 20, W - 40, 470, (ctx, w, h) => studio(ctx, w, h, g, t))
-  label(ctx, 'Sunday morning', W / 2, 490, fade(t, 0.4))
-  panel(ctx, 20, 540, W - 40, 250, (ctx, w, h) => paintTin(ctx, w, h), { alpha: fade(t, 1.2) })
+  faded(ctx, fade(t, 0.4), (g) => label(g, 'Sunday morning', W / 2, 490))
+  faded(ctx, fade(t, 1.2), (g) => panel(g, 20, 540, W - 40, 250, paintTin))
 }, 'A blank canvas, and nobody to tell her no.', { wait: 1.4 })
 
 // ---------- page 2: the painting ----------
@@ -752,8 +774,8 @@ function studioWall(ctx, w, h) {
 
 const after = vignette((ctx, t) => {
   panel(ctx, 20, 20, W - 40, 440, street)
-  label(ctx, 'Her last day', W / 2, 460, fade(t, 0.4))
-  panel(ctx, 20, 510, W - 40, 290, studioWall, { alpha: fade(t, 1.2) })
+  faded(ctx, fade(t, 0.4), (g) => label(g, 'Her last day', W / 2, 460))
+  faded(ctx, fade(t, 1.2), (g) => panel(g, 20, 510, W - 40, 290, studioWall))
 }, 'Her days stopped looking the same.', { wait: 1.4 })
 
 export default {

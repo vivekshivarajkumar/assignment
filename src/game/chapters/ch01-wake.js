@@ -319,9 +319,9 @@ function plaid(ctx, base, line) {
   }
 }
 
-function quilt(ctx) {
+function quilt(ctx, pts = QUILT) {
   ctx.save()
-  shape(ctx, QUILT, null, null)
+  shape(ctx, pts, null, null)
   ctx.clip()
   plaid(ctx, K.white, K.grid)
   // the right side of the quilt is in shadow
@@ -335,7 +335,7 @@ function quilt(ctx) {
   ctx.clip()
   plaid(ctx, K.shadeDark, K.gridDark)
   ctx.restore()
-  shape(ctx, QUILT, null)
+  shape(ctx, pts, null)
   for (const s of [[[700, 1080], [760, 1110], [800, 1150]], [[730, 1180], [770, 1200], [800, 1240]]]) ink(ctx, s, 4)
 }
 
@@ -352,7 +352,187 @@ function tornBottom(ctx) {
   ctx.closePath()
 }
 
-function bedScene(ctx, t, ringing) {
+// ---------- after the snooze: on her back, hand to her forehead ----------
+// Traced from the reference over a coordinate grid, on the same 900 x 2000 sheet.
+
+const PILLOW2 = [[10, 488], [816, 345], [836, 790], [90, 905]]
+const QUILT2 = [
+  [-40, 1088], [100, 1062], [250, 1030], [430, 966], [560, 936], [640, 956], [760, 996],
+  [899, 1030], [960, 1050], [960, 1900], [-40, 1900],
+]
+const AWAKE = {
+  // chest, shoulders and the arm lying across her, down to the quilt
+  torso: [
+    [150, 1100], [150, 792], [240, 790], [330, 780], [460, 790], [560, 796], [622, 836],
+    [668, 902], [700, 984], [720, 1100],
+  ],
+  chestShadow: [[238, 796], [385, 810], [245, 926]],
+  forearm: [[156, 800], [236, 800], [244, 730], [292, 722], [298, 860], [292, 1000], [170, 1004]],
+  fist: [[156, 740], [170, 716], [200, 708], [236, 716], [252, 746], [246, 800], [214, 816], [176, 812], [156, 784]],
+  hairBack: [
+    [236, 540], [262, 508, 's'], [276, 500], [300, 470], [336, 470, 's'], [350, 458],
+    [410, 456], [440, 448, 's'], [460, 466], [505, 488], [528, 494, 's'], [535, 525],
+    [555, 565], [570, 610], [585, 660], [595, 715], [600, 765], [560, 774], [500, 778],
+    [455, 772], [400, 790], [330, 812], [300, 800], [270, 760], [255, 700], [250, 640],
+    [240, 590],
+  ],
+  face: [
+    [296, 590], [330, 552], [400, 540], [450, 552], [466, 600], [458, 690], [462, 760], [440, 772], [400, 780], [362, 770],
+    [336, 746], [318, 700], [305, 650],
+  ],
+  neck: [[362, 770], [460, 766], [470, 808], [372, 812]],
+  lockRight: [
+    [455, 600], [480, 560], [540, 540], [570, 610], [585, 660], [595, 715], [600, 765, 's'],
+    [578, 770], [560, 776, 's'], [530, 772], [500, 778, 's'], [476, 770], [462, 740],
+    [455, 690], [452, 640],
+  ],
+  lockLeft: [
+    [240, 590], [290, 600], [310, 640], [326, 700], [346, 760], [360, 800, 's'], [330, 812],
+    [314, 796, 's'], [295, 800], [270, 760], [255, 700], [248, 640],
+  ],
+  // fringe: separate locks hanging over her forehead, [root, bend, tip, width]
+  fringe: [
+    [[300, 548], [318, 590], [334, 634], 34],
+    [[346, 544], [366, 584], [384, 620], 32],
+    [[386, 550], [408, 580], [427, 606], 28],
+    [[424, 556], [446, 580], [463, 599], 26],
+  ],
+
+  palm: [[230, 604], [250, 574], [288, 570], [308, 598], [302, 660], [292, 722], [242, 732], [228, 672]],
+}
+
+function strap(ctx, x1, y1, x2, y2) {
+  ctx.lineCap = 'round'
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 20
+  ctx.beginPath()
+  ctx.moveTo(x1, y1)
+  ctx.lineTo(x2, y2)
+  ctx.stroke()
+  ctx.strokeStyle = K.grid
+  ctx.lineWidth = 11
+  ctx.stroke()
+}
+
+function awake(ctx) {
+  const A = AWAKE
+  ctx.fillStyle = K.sheet
+  ctx.fillRect(-40, 420, 1000, 1500)
+  ink(ctx, [[-40, 420], [960, 420]], 7)
+
+  // pillow, grey where her head presses in, with a lit edge on the right
+  const pillow2 = () => {
+    const n = PILLOW2.length
+    ctx.beginPath()
+    ctx.moveTo((PILLOW2[n - 1][0] + PILLOW2[0][0]) / 2, (PILLOW2[n - 1][1] + PILLOW2[0][1]) / 2)
+    for (let i = 0; i < n; i++) ctx.arcTo(...PILLOW2[i], ...PILLOW2[(i + 1) % n], 46)
+    ctx.closePath()
+  }
+  pillow2()
+  ctx.fillStyle = K.white
+  ctx.fill()
+  shadeInside(ctx, pillow2, [[190, 520], [300, 452], [520, 440], [745, 432], [760, 760], [620, 820], [330, 860], [196, 820]], K.shade)
+  pillow2()
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 7
+  ctx.stroke()
+  for (const s of [
+    [[210, 470], [250, 486], [282, 500]], [[110, 540], [170, 548], [226, 556]],
+    [[100, 730], [130, 726], [160, 722]], [[610, 440], [650, 430], [690, 420]],
+    [[616, 516], [648, 508], [680, 500]], [[640, 620], [680, 620], [712, 624]],
+    [[648, 690], [690, 696], [722, 704]],
+  ]) ink(ctx, s, 5)
+
+  // chest and shoulders; the arm lying across her; shadow under her chin
+  shape(ctx, A.torso, K.white, null)
+  shape(ctx, A.chestShadow, K.shade, null)
+  shadeInside(ctx, A.torso, [[600, 860], [700, 900], [720, 1000], [610, 1000]], K.shade)
+  ink(ctx, [[245, 926], [310, 868], [385, 812]], 6) // top of the arm
+  ink(ctx, [[460, 797], [560, 800], [625, 845], [670, 910], [700, 985]], 6) // shoulder
+  strap(ctx, 380, 800, 384, 852)
+
+  // forearm rising from the quilt, the loose fist by her face
+  shape(ctx, A.forearm, K.white)
+  shadeInside(ctx, A.forearm, [[266, 730], [300, 730], [300, 1010], [266, 1010]], K.shade)
+  shape(ctx, A.forearm, null)
+  shape(ctx, A.fist, K.white)
+  for (const s of [[[166, 738], [192, 748]], [[184, 724], [210, 740]], [[206, 722], [228, 744]], [[160, 770], [192, 776]], [[196, 780], [214, 800]]]) ink(ctx, s, 4.5)
+
+  // hair behind her head, the neck, the face
+  shape(ctx, A.hairBack, K.hair, null)
+  // crayon grain and loose strands so the hair looks slept-in
+  ctx.save()
+  shape(ctx, A.hairBack, null, null)
+  ctx.clip()
+  const g = rng(171)
+  ctx.strokeStyle = '#3a2f2f'
+  ctx.lineWidth = 2
+  ctx.globalAlpha = 0.5
+  for (let i = 0; i < 180; i++) {
+    const x = 240 + g() * 370
+    const y = 450 + g() * 370
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(x + 2 + g() * 4, y + 8 + g() * 14)
+    ctx.stroke()
+  }
+  ctx.restore()
+  for (const s of [
+    [[250, 530], [220, 560], [200, 600]], [[268, 520], [240, 540], [212, 548]],
+    [[300, 476], [280, 470], [262, 478]], [[440, 452], [470, 446], [500, 458]],
+    [[560, 560], [590, 590], [600, 640]], [[590, 700], [610, 740], [604, 780]],
+  ]) ink(ctx, s, 3.5)
+
+  shape(ctx, A.neck, K.shade, null)
+  shape(ctx, A.face, K.white, null)
+  ink(ctx, [[338, 748], [364, 768], [404, 780], [440, 773]], 5) // jaw
+  // tired face: furrowed brows, eyes shut, small hooked nose, mouth open
+  ink(ctx, [[322, 628], [345, 620], [370, 628]], 5)
+  ink(ctx, [[400, 612], [418, 616], [432, 624]], 5)
+  ink(ctx, [[326, 666], [336, 672], [348, 674], [360, 668]], 5)
+  ink(ctx, [[420, 656], [430, 660], [440, 660]], 5)
+  ink(ctx, [[401, 640], [399, 666], [395, 688], [402, 696], [412, 696]], 5)
+  ctx.fillStyle = '#2b2323'
+  ctx.beginPath()
+  ctx.ellipse(386, 725, 17, 9, -0.05, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = K.white
+  ctx.beginPath()
+  ctx.ellipse(386, 720, 11, 3, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.ellipse(386, 725, 17, 9, -0.05, 0, Math.PI * 2)
+  ctx.stroke()
+
+  // locks falling past her face, and the fringe
+  shape(ctx, A.lockRight, K.hair, null)
+  shape(ctx, A.lockLeft, K.hair, null)
+  // hand pressed to her temple, fingers pushed up into her hair
+  shape(ctx, A.palm, K.white)
+  for (const s of [[[252, 578], [258, 612]], [[272, 572], [276, 612]], [[290, 578], [292, 612]], [[238, 650], [262, 660]]]) ink(ctx, s, 4.5)
+  for (const s of [[[240, 560], [258, 580], [270, 600]], [[262, 552], [282, 576], [296, 596]]]) ink(ctx, s, 4)
+  for (const [root, bend, tip, w] of A.fringe) {
+    // a lock: wide at the hairline, curving to a point
+    ctx.fillStyle = K.hair
+    ctx.beginPath()
+    ctx.moveTo(root[0] - w / 2, root[1] - 30)
+    ctx.quadraticCurveTo(bend[0] - w / 2, bend[1], tip[0], tip[1])
+    ctx.quadraticCurveTo(bend[0] + w / 2, bend[1] - 10, root[0] + w / 2 + 10, root[1] - 30)
+    ctx.closePath()
+    ctx.fill()
+  }
+  for (const s of [
+    [[480, 600], [488, 680], [480, 760]], [[530, 580], [548, 670], [540, 766]],
+    [[268, 640], [276, 700], [296, 790]], [[300, 660], [320, 730], [336, 800]],
+    [[330, 480], [300, 520], [270, 560]], [[420, 470], [470, 490], [520, 530]],
+    [[360, 540], [370, 580], [376, 602]], [[430, 546], [444, 580], [450, 598]],
+  ]) ink(ctx, s, 4)
+
+}
+
+function bedScene(ctx, t, ringing, awakeK) {
   ctx.save()
   tornBottom(ctx)
   ctx.clip()
@@ -362,12 +542,18 @@ function bedScene(ctx, t, ringing) {
   ctx.fillRect(-40, 420, 1000, 1500)
   ink(ctx, [[-40, 420], [960, 420]], 7)
   for (const s of [[[-10, 920], [60, 900], [120, 890]], [[780, 900], [860, 890], [920, 910]]]) ink(ctx, s, 4)
-  sleeper(ctx)
-  quilt(ctx)
+  if (awakeK < 1) sleeper(ctx)
+  if (awakeK > 0) {
+    ctx.save()
+    ctx.globalAlpha = awakeK
+    awake(ctx)
+    ctx.restore()
+  }
+  quilt(ctx, awakeK > 0.5 ? QUILT2 : QUILT)
   ctx.restore()
 
   // she stirs while the alarm rings
-  if (ringing) {
+  if (ringing && awakeK === 0) {
     const k = (t * 2) % 1
     ctx.strokeStyle = K.ink
     ctx.lineWidth = 5
@@ -407,7 +593,7 @@ function nameLabel(ctx, alpha) {
 
 // Flip clock with four split-flap cells (the first one blank).
 // `flip` runs 0..1 while the minute changes; the changing cells fold over.
-function flipClock(ctx, digits, flip, ringing, t) {
+function flipClock(ctx, digits, flip, ringing, t, changing) {
   ctx.save()
   if (ringing) ctx.translate(Math.sin(t * 70) * 5, 0)
   ctx.lineJoin = 'round'
@@ -451,10 +637,10 @@ function flipClock(ctx, digits, flip, ringing, t) {
     ctx.fill()
     ctx.stroke()
     if (digits[i] !== ' ') {
-      const changing = flip > 0 && flip < 1 && i > 0
+      const folding = flip > 0 && flip < 1 && changing.includes(i)
       ctx.save()
       ctx.translate(x + 32, 1566)
-      if (changing) ctx.scale(1, Math.abs(Math.cos(flip * Math.PI)))
+      if (folding) ctx.scale(1, Math.abs(Math.cos(flip * Math.PI)))
       ctx.fillStyle = K.digit
       ctx.font = `600 92px ${SANS}`
       ctx.textAlign = 'center'
@@ -513,7 +699,7 @@ function flipClock(ctx, digits, flip, ringing, t) {
   }
 }
 
-function clockPanel(ctx, alpha, digits, flip, ringing, t) {
+function clockPanel(ctx, alpha, digits, flip, ringing, t, changing) {
   const r = rng(141)
   ctx.save()
   ctx.globalAlpha = alpha
@@ -535,7 +721,7 @@ function clockPanel(ctx, alpha, digits, flip, ringing, t) {
     const y = 1590 + r() * 130
     ink(ctx, [[x, y], [x + 20 + r() * 40, y + 1]], 3)
   }
-  flipClock(ctx, digits, flip, ringing, t)
+  flipClock(ctx, digits, flip, ringing, t, changing)
   ctx.restore()
   ctx.strokeStyle = K.ink
   ctx.lineWidth = 8
@@ -547,11 +733,30 @@ function clockPanel(ctx, alpha, digits, flip, ringing, t) {
 // otherwise crop the headboard so the clock panel (to row 1790) stays in view.
 const sheetTop = (height) => Math.max(58, 1790 - height / 0.6)
 
+// 6:59 flips to 7:00 and the alarm rings. Tap it: she snoozes and rolls over,
+// the clock flips to 7:15 and rings again. Tap again and she gets up.
 export default function wakeUp(api) {
   const FLIP_AT = 1.6
+  let snoozedAt = null
   let stoppedAt = null
   let lastBeep = 0
   const toScreen = (y) => (y - sheetTop(api.height())) * 0.6
+  const inClock = (y) => y > toScreen(1312) && y < toScreen(1764)
+  // what the clock and Mira are doing at time t
+  const state = (t) => {
+    const first = clamp((t - FLIP_AT) / 0.35, 0, 1)
+    if (snoozedAt === null) {
+      return { digits: first < 0.5 ? ' 659' : ' 700', flip: first, changing: [1, 2, 3], ringing: first >= 1, awakeK: 0 }
+    }
+    const second = clamp((t - snoozedAt - 1.1) / 0.35, 0, 1)
+    return {
+      digits: second < 0.5 ? ' 700' : ' 715',
+      flip: second,
+      changing: [2, 3],
+      ringing: second >= 1 && stoppedAt === null,
+      awakeK: easeOut((t - snoozedAt - 0.3) / 0.7),
+    }
+  }
   return {
     tall: true,
     // test hook: where to tap to stop the alarm
@@ -559,21 +764,20 @@ export default function wakeUp(api) {
     draw(ctx, t) {
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, W, api.height())
-      const flip = clamp((t - FLIP_AT) / 0.35, 0, 1)
-      const digits = flip < 0.5 ? ' 659' : ' 700'
-      const ringing = flip >= 1 && stoppedAt === null
-      if (ringing && t - lastBeep > 0.45) {
+      const st = state(t)
+      if (st.ringing && t - lastBeep > 0.45) {
         lastBeep = t
         tone(1320, 0.14, { type: 'square', gain: 0.03 })
       }
       ctx.save()
       ctx.scale(0.6, 0.6)
       ctx.translate(0, -sheetTop(api.height()))
-      bedScene(ctx, t, ringing)
-      clockPanel(ctx, easeOut((t - 0.5) / 0.6), digits, flip, ringing, t)
+      bedScene(ctx, t, st.ringing, st.awakeK)
+      clockPanel(ctx, easeOut((t - 0.5) / 0.6), st.digits, st.flip, st.ringing, t, st.changing)
       nameLabel(ctx, easeOut((t - 0.9) / 0.6))
       ctx.restore()
-      if (ringing && t > FLIP_AT + 2.5) tapHint(ctx, W / 2, toScreen(1400), t, K.ink)
+      const ringSince = snoozedAt === null ? FLIP_AT : snoozedAt + 1.45
+      if (st.ringing && t > ringSince + 2.5) tapHint(ctx, W / 2, toScreen(1400), t, K.ink)
       if (stoppedAt !== null) tapHint(ctx, 50, 50, t)
     },
     down(x, y, t) {
@@ -581,10 +785,10 @@ export default function wakeUp(api) {
         if (t - stoppedAt > 0.5) api.finish()
         return
       }
-      if (t > FLIP_AT + 0.4 && y > toScreen(1312) && y < toScreen(1764)) {
-        stoppedAt = t
-        pop(300)
-      }
+      if (!inClock(y) || !state(t).ringing) return
+      pop(300)
+      if (snoozedAt === null) snoozedAt = t
+      else stoppedAt = t
     },
   }
 }

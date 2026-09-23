@@ -374,7 +374,7 @@ const home = (api) => vignette((ctx, t) => {
   label(ctx, 'Home', 270, 480, fade(t, 0.3))
   reveal(ctx, t, 0.9, 30, 520, 480, 230, (c, w, h) => {
     wash(c, -10, -10, w + 20, h + 20, '#35365a', 1116)
-    blob(c, 440, 60, 90, 80, '#f7d27a', 1117, 0.25) // lamp light
+    blob(c, 440, 60, 90, 80, '#f7d27a', 1117, 0.45) // lamp light
     line(c, 440, 220, 440, 60, C.ink, 4, 1132)
     blob(c, 440, 50, 26, 18, C.mira, 1133)
     wash(c, 60, 130, 380, 90, '#6d7f92', 1118) // sofa

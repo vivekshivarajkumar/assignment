@@ -1,4 +1,4 @@
-import { W, FONT, paper, text, rng, easeOut } from './paint.js'
+import { W, FONT, paper, rng, easeOut } from './paint.js'
 import { pop } from './sound.js'
 
 
@@ -16,6 +16,7 @@ const HAIR = '#455271'
 const HAIR_LIGHT = '#566384'
 const HAIR_DARK = '#34405f'
 const SHIRT = '#dededb'
+const TITLE_FONT = "'Gaegu', 'Patrick Hand', cursive"
 
 // Smooth closed curve through points (quadratic curves through midpoints).
 function smooth(ctx, pts, closed = true) {
@@ -27,7 +28,11 @@ function smooth(ctx, pts, closed = true) {
     ctx.moveTo(m0[0], m0[1])
     for (let i = 0; i < n; i++) {
       const m = mid(pts[i], pts[(i + 1) % n])
-      ctx.quadraticCurveTo(pts[i][0], pts[i][1], m[0], m[1])
+      // points flagged sharp (third value true) become corners, e.g. hair tips
+      if (pts[i][2] === true) {
+        ctx.lineTo(pts[i][0], pts[i][1])
+        ctx.lineTo(m[0], m[1])
+      } else ctx.quadraticCurveTo(pts[i][0], pts[i][1], m[0], m[1])
     }
     ctx.closePath()
   } else {
@@ -68,46 +73,60 @@ function curve(p0, p1, p2, n = 12) {
   })
 }
 
-// Hair outline at rest: [x, y, flow]; flow 0 = roots (still), 1 = tips (move most).
+// Hair outline at rest: [x, y, flow, 's' for a sharp tip]; flow 0 = roots (still),
+// 1 = tips (move most).
+// A bob that ends at the jaw, its back ends swept left by the breeze.
 const HAIR_REST = [
-  [478, 1190, 0.02], [494, 1128, 0.02], [480, 1060, 0], [424, 1004, 0], [332, 974, 0],
-  [232, 976, 0], [140, 1008, 0.05], [70, 1058, 0.15], [18, 1124, 0.3], [-24, 1210, 0.5],
-  [-48, 1330, 0.7], [-60, 1470, 0.85], [-48, 1610, 1], [-20, 1730, 1], [30, 1700, 1],
-  [70, 1760, 1], [118, 1702, 0.9], [160, 1716, 0.9], [186, 1640, 0.7], [214, 1566, 0.5],
-  [244, 1500, 0.35], [262, 1430, 0.25], [274, 1360, 0.15], [294, 1292, 0.08],
-  [332, 1238, 0.05], [382, 1204, 0.03], [432, 1186, 0.02],
+  [478, 1190, 0.02], [494, 1128, 0.02], [480, 1060, 0], [424, 1004, 0], [332, 972, 0],
+  [226, 974, 0], [130, 998, 0.05], [44, 1044, 0.15], [-24, 1106, 0.3], [-70, 1190, 0.5],
+  [-96, 1300, 0.75], [-100, 1420, 0.95], [-70, 1510, 1],
+  // chunky, pointed ends
+  [-20, 1580, 1, 's'], [10, 1536, 1], [44, 1616, 1, 's'], [84, 1560, 1], [124, 1626, 0.95, 's'],
+  [160, 1570, 0.85], [200, 1622, 0.75, 's'], [232, 1566, 0.6], [262, 1580, 0.5, 's'],
+  [278, 1500, 0.3], [284, 1400, 0.15], [300, 1300, 0.08], [336, 1240, 0.05],
+  [384, 1206, 0.03], [432, 1188, 0.02],
 ]
 
-// Dark strands: control points of quadratic curves [root, bend, tip] with a flow per point.
+// Far-side hair, seen under the jaw behind the neck.
+const LOCK_REST = [
+  [318, 1468, 0.2], [418, 1474, 0.3], [440, 1506, 0.45], [428, 1560, 0.6], [414, 1616, 0.8, 's'],
+  [390, 1568, 0.7], [360, 1620, 0.8, 's'], [336, 1572, 0.6], [306, 1548, 0.5],
+]
+
+// Dark strands: [root, bend, tip, width] of quadratic curves.
 const STRANDS = [
   // fringe: short strokes falling to the brow
   [[462, 1080], [470, 1130], [472, 1176], 5],
   [[424, 1040], [436, 1100], [430, 1160], 6],
   [[380, 1030], [392, 1080], [384, 1130], 4],
-  // crown sweeping down the back
-  [[330, 1010], [300, 1100], [296, 1230], 6],
-  [[280, 1040], [236, 1160], [240, 1330], 7],
-  [[196, 1050], [140, 1180], [150, 1400], 6],
-  [[136, 1100], [70, 1260], [80, 1520], 7],
-  [[70, 1150], [10, 1300], [10, 1560], 5],
-  // loose lower strands
-  [[230, 1330], [206, 1440], [212, 1560], 5],
-  [[120, 1420], [90, 1540], [60, 1700], 6],
-  [[30, 1400], [-10, 1520], [0, 1640], 4],
+  // crown sweeping back and down
+  [[330, 1010], [300, 1110], [292, 1240], 6],
+  [[280, 1040], [240, 1170], [236, 1330], 7],
+  [[200, 1050], [130, 1170], [110, 1360], 6],
+  [[140, 1090], [60, 1220], [30, 1420], 7],
+  [[80, 1130], [0, 1250], [-40, 1400], 5],
+  // ends
+  [[250, 1380], [230, 1480], [210, 1570], 5],
+  [[170, 1390], [140, 1500], [110, 1590], 6],
+  [[80, 1400], [40, 1500], [0, 1550], 4],
+  [[400, 1500], [410, 1540], [396, 1590], 4],
+  [[30, 1450], [20, 1520], [44, 1600], 4],
+  [[210, 1470], [196, 1540], [200, 1610], 4],
+  [[120, 1480], [116, 1560], [124, 1616], 4],
 ]
 
 function flow(x, y, w, t) {
-  const dx = (Math.sin(t * 1.6 - y * 0.012) * 26 - 10) * w
+  const dx = (Math.sin(t * 1.6 - y * 0.012) * 24 - 14) * w
   const dy = Math.cos(t * 1.2 + x * 0.02) * 10 * w
   return [x + dx, y + dy]
 }
 
 // how much a point at height y moves (roots at the crown stay put)
-const flowAt = (x, y) => Math.max(0, Math.min(1, (y - 1080) / 560 + (260 - x) / 900))
+const flowAt = (x, y) => Math.max(0, Math.min(1, (y - 1100) / 450 + (260 - x) / 700))
 
 const grain = (() => {
   const r = rng(17)
-  return Array.from({ length: 900 }, () => [r() * 700 - 80, 950 + r() * 820, r(), r()])
+  return Array.from({ length: 900 }, () => [r() * 640 - 100, 950 + r() * 700, r(), r()])
 })()
 
 function portrait(ctx, t) {
@@ -133,6 +152,11 @@ function portrait(ctx, t) {
     [[240, 1850], [244, 1890], [250, 1930]],
     [[168, 1940], [180, 1970], [190, 2010]],
   ]) brush(ctx, curve(...s), 5)
+
+  // far-side hair behind the neck
+  ctx.fillStyle = HAIR
+  smooth(ctx, LOCK_REST.map(([x, y, w, tip]) => [...flow(x, y, w, t), tip === 's']))
+  ctx.fill()
 
   // neck and face
   ctx.fillStyle = SKIN
@@ -171,7 +195,7 @@ function portrait(ctx, t) {
   ctx.stroke()
 
   // hair: flat colour, crayon grain, soft broken edge
-  const hair = HAIR_REST.map(([x, y, w]) => flow(x, y, w, t))
+  const hair = HAIR_REST.map(([x, y, w, tip]) => [...flow(x, y, w, t), tip === 's'])
   ctx.save()
   smooth(ctx, hair)
   ctx.fillStyle = HAIR
@@ -189,24 +213,18 @@ function portrait(ctx, t) {
   }
   ctx.globalAlpha = 1
   ctx.restore()
-  // fuzzy edge: dabs of hair colour along the outline
-  const er = rng(23)
-  ctx.fillStyle = HAIR
-  for (let i = 0; i < hair.length; i++) {
-    const [x1, y1] = hair[i]
-    const [x2, y2] = hair[(i + 1) % hair.length]
-    for (let k = 0; k < 1; k += 0.08) {
-      const x = x1 + (x2 - x1) * k + (er() - 0.5) * 5
-      const y = y1 + (y2 - y1) * k + (er() - 0.5) * 5
-      ctx.beginPath()
-      ctx.arc(x, y, 2 + er() * 2.5, 0, Math.PI * 2)
-      ctx.fill()
-    }
-  }
+  // soft crayon edge: a slightly larger, fainter copy of the shape
+  ctx.save()
+  ctx.globalAlpha = 0.45
+  ctx.strokeStyle = HAIR
+  ctx.lineWidth = 5
+  smooth(ctx, hair)
+  ctx.stroke()
+  ctx.restore()
   // dark strands following the wind
   for (const [p0, p1, p2, w] of STRANDS) {
     const pts = curve(p0, p1, p2, 16).map(([x, y]) => flow(x, y, flowAt(x, y), t))
-    brush(ctx, pts, w)
+    brush(ctx, pts, w * 1.5)
   }
 
   // ear peeking out of the hair
@@ -249,7 +267,14 @@ export default function titleScreen(hasSave) {
         paper(ctx, BG)
         portrait(ctx, t)
         const a = easeOut(t / 1.2)
-        text(ctx, 'mira', W / 2, 170, { size: 190, color: INK, alpha: a })
+        ctx.save()
+        ctx.globalAlpha = a
+        ctx.font = `300 190px ${TITLE_FONT}`
+        ctx.fillStyle = INK
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('mira', W / 2, 135)
+        ctx.restore()
         for (const row of rows) {
           const isBig = row.key === big
           ctx.save()

@@ -1,8 +1,8 @@
 // Chapter 1, page 6 · on the phone with Mum
 // Split panels: Mum at home on the landline (the same face as her photo on the
 // incoming call), and Mira at her desk at half past two, phone to her ear,
-// annoyed. Mum keeps talking; pick one of two replies each time. Three replies
-// fill the bar and end the call. Traced on the same 900 x 2000 phone sheet.
+// annoyed. Mum keeps talking; pick one of two replies each time: it lights up
+// blue while Mira says it. Four replies fill the bar and end the call. Traced on the same 900 x 2000 phone sheet.
 import { W, UI_FONT, tapHint, clamp, easeOut } from '../paint.js'
 import { pop } from '../sound.js'
 import { K, ink, shape, sheetTop } from './ch01-wake.js'
@@ -32,9 +32,13 @@ const CJK = "'Noto Sans TC', 'PingFang HK', 'Microsoft JhengHei', sans-serif"
 // Each time Mum pauses, Mira can say one of two things.
 const ROUNDS = [
   [['下次再傾。', 'Talk to you later.'], ['唔駛理我。', 'Don’t worry about me.']],
-  [['我好忙呀。', 'I’m really busy.'], ['我食咗飯喇。', 'I’ve eaten already.']],
+  [['我好好。', 'I’m fine.'], ['下次再傾。', 'Talk to you later.']],
+  [['我好好。', 'I’m fine.'], ['唔好幫我搵男朋友。', 'You don’t have to find a boyfriend for me.']],
   [['我要做嘢喇。', 'I need to get back to work.'], ['拜拜，媽。', 'Bye, Mum.']],
 ]
+const PICKED = '#70d3fa'
+const SAY = 1.0 // seconds Mira takes to say her reply
+const MUM = 1.4 // seconds Mum then talks before the next replies appear
 
 // Smooth ink stroke through points.
 function curve(ctx, pts, width = 5, color = K.ink) {
@@ -187,12 +191,28 @@ function mum(ctx, t, talking) {
   ink(ctx, [[188, 654], [196, 654]], 8)
   ink(ctx, [[84, 650], [96, 652]], 7)
   curve(ctx, [[174, 680], [166, 698], [178, 704]], 5) // nose
-  // mouth: a round "o" while she talks, a line while she listens
+  // mouth: while she talks it goes between a round "o" and a bared-teeth
+  // grimace; while she listens it's a short line
   ctx.fillStyle = K.ink
-  ctx.beginPath()
-  if (talking && Math.sin(t * 16) > -0.2) ctx.ellipse(185, 733, 10, 17, 0, 0, Math.PI * 2)
-  else ctx.ellipse(185, 736, 12, 3.5, 0, 0, Math.PI * 2)
-  ctx.fill()
+  const phase = Math.floor(t / 0.3) % 3
+  if (talking && phase === 2) {
+    ctx.beginPath()
+    ctx.moveTo(158, 733)
+    ctx.quadraticCurveTo(175, 725, 202, 726)
+    ctx.quadraticCurveTo(214, 731, 202, 738)
+    ctx.quadraticCurveTo(178, 742, 160, 740)
+    ctx.closePath()
+    ctx.fillStyle = '#ffffff'
+    ctx.fill()
+    ctx.strokeStyle = K.ink
+    ctx.lineWidth = 6
+    ctx.stroke()
+  } else {
+    ctx.beginPath()
+    if (talking) ctx.ellipse(185, 733, 10, 17, 0, 0, Math.PI * 2)
+    else ctx.ellipse(185, 736, 12, 3.5, 0, 0, Math.PI * 2)
+    ctx.fill()
+  }
 
   // the blue handset against her ear, her hand wrapped around it
   poly(ctx, [[179, 770], [236, 748], [284, 700], [296, 640], [336, 626], [348, 656], [326, 706], [272, 762], [254, 818], [196, 830]], C2.phone, 7)
@@ -250,7 +270,7 @@ function officeBack(ctx) {
   for (const y of [1150, 1190, 1230]) curve(ctx, [[480, y], [760, y]], 4, '#3a3a3a')
 }
 
-function mira(ctx) {
+function mira(ctx, speaking) {
   // white shirt, collar and placket
   shape(ctx, [[480, 1100], [486, 900], [495, 850], [560, 835], [670, 842], [745, 842], [795, 842], [830, 880], [850, 1100]], '#ffffff')
   shape(ctx, [[668, 770], [737, 770], [742, 848], [666, 848]], '#ffffff', null) // neck
@@ -296,7 +316,13 @@ function mira(ctx) {
     ctx.fill()
   }
   curve(ctx, [[722, 684], [712, 706], [726, 714]], 5) // nose
-  curve(ctx, [[692, 737], [716, 736]], 5) // mouth
+  // mouth: a small "o" while she answers, otherwise a flat line
+  if (speaking) {
+    ctx.fillStyle = K.ink
+    ctx.beginPath()
+    ctx.ellipse(704, 738, 8, 12, 0, 0, Math.PI * 2)
+    ctx.fill()
+  } else curve(ctx, [[692, 737], [716, 736]], 5)
   // stress marks by her head
   for (const s of [[[500, 618], [512, 632]], [[490, 652], [508, 656]], [[496, 684], [512, 680]]]) curve(ctx, s, 5)
 
@@ -348,6 +374,8 @@ function bar(ctx, p) {
   ctx.stroke()
 }
 
+// The two replies. Once one is picked it fills blue with white text and the
+// other one greys out.
 function choices(ctx, options, alpha, picked) {
   const { x, y, w, h } = CHOICE
   ctx.save()
@@ -357,15 +385,20 @@ function choices(ctx, options, alpha, picked) {
   options.forEach(([zh, en], i) => {
     const top = y + i * h
     if (picked === i) {
-      ctx.fillStyle = '#e4ecf1'
+      ctx.fillStyle = PICKED
       ctx.fillRect(x, top, w, h)
     }
-    ctx.fillStyle = '#111111'
+    ctx.fillStyle = picked === i ? '#ffffff' : picked >= 0 ? '#d4d4d4' : '#111111'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
+    // long replies get a smaller size so they fit on one line
     ctx.font = `400 84px ${CJK}`
+    const k = Math.min(1, (w - 60) / ctx.measureText(zh).width)
+    ctx.font = `400 ${Math.floor(84 * k)}px ${CJK}`
     ctx.fillText(zh, x + w / 2, top + h * 0.43)
     ctx.font = `700 40px ${UI_FONT}`
+    const k2 = Math.min(1, (w - 60) / ctx.measureText(`(${en})`).width)
+    ctx.font = `700 ${Math.floor(40 * k2)}px ${UI_FONT}`
     ctx.fillText(`(${en})`, x + w / 2, top + h * 0.78)
   })
   ctx.restore()
@@ -389,9 +422,10 @@ export default function mumTalks(api) {
   const top = () => sheetTop(api.height())
   const toSheet = (x, y) => [x / 0.6, y / 0.6 + top()]
   const toScreen = (x, y) => [x * 0.6, (y - top()) * 0.6]
-  // Mum talks for a moment before each set of replies appears
-  const talkUntil = () => (pickedAt === null ? 1.4 : pickedAt + 1.8)
-  const showing = (t) => doneAt === null && t > talkUntil()
+  // Mira says her reply, then Mum talks for a moment before the next replies
+  const talkUntil = () => (pickedAt === null ? 1.4 : pickedAt + SAY + MUM)
+  const saying = (t) => pickedAt !== null && t < pickedAt + SAY
+  const showing = (t) => doneAt === null && !saying(t) && t > talkUntil()
 
   return {
     tall: true,
@@ -405,7 +439,7 @@ export default function mumTalks(api) {
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, W, h)
       // after a reply, move on to the next pair once Mum has had her say
-      if (pickedAt !== null && picked >= 0 && t > pickedAt + 0.5 && doneAt === null) {
+      if (pickedAt !== null && picked >= 0 && t > pickedAt + SAY && doneAt === null) {
         round = Math.min(ROUNDS.length - 1, round + 1)
         picked = -1
       }
@@ -420,7 +454,7 @@ export default function mumTalks(api) {
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(LEFT.x, LEFT.y, LEFT.w, LEFT.h)
       familyPhoto(ctx)
-      mum(ctx, t, !showing(t))
+      mum(ctx, t, !showing(t) && !saying(t) && (doneAt === null || t < doneAt + SAY + MUM))
       ctx.restore()
       frame(ctx, LEFT)
       // Mira's panel
@@ -431,12 +465,12 @@ export default function mumTalks(api) {
       ctx.fillStyle = C2.wall
       ctx.fillRect(RIGHT.x, RIGHT.y, RIGHT.w, RIGHT.h)
       officeBack(ctx)
-      mira(ctx)
+      mira(ctx, saying(t))
       ctx.restore()
       frame(ctx, RIGHT)
 
       bar(ctx, replies / ROUNDS.length)
-      const a = doneAt !== null ? 1 - easeOut((t - doneAt) / 0.4) : showing(t) ? easeOut((t - talkUntil()) / 0.35) : 0
+      const a = saying(t) ? 1 : showing(t) ? easeOut((t - talkUntil()) / 0.35) : 0
       choices(ctx, ROUNDS[round], clamp(a, 0, 1), picked)
       ctx.restore()
 
@@ -444,11 +478,11 @@ export default function mumTalks(api) {
         const [x, y] = toScreen(CHOICE.x + CHOICE.w * 0.82, CHOICE.y + CHOICE.h / 2)
         tapHint(ctx, x, y, t, K.ink)
       }
-      if (doneAt !== null && t - doneAt > 0.8) tapHint(ctx, 50, 50, t)
+      if (doneAt !== null && t > doneAt + SAY + MUM) tapHint(ctx, 50, 50, t)
     },
     down(x, y, t) {
       if (doneAt !== null) {
-        if (t - doneAt > 0.8) api.finish()
+        if (t > doneAt + SAY + MUM) api.finish()
         return
       }
       if (!showing(t)) return

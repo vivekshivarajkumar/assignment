@@ -43,7 +43,7 @@ function comic(panels, captionText) {
         })
         const all = shown.length === panels.length
         if (all) caption(ctx, captionText, easeOut((t - shown[last] - 0.6) / 0.6))
-        if (all && t - shown[last] > 0.8) tapHint(ctx, W - 50, 50, t)
+        if (all && t - shown[last] > 0.8) tapHint(ctx, 50, 50, t)
       },
       down(x, y, t) {
         if (shown.length < panels.length) shown.push(t)
@@ -125,7 +125,7 @@ const ringing = (api) => {
         if (t > 1) tapHint(ctx, PHONE.x, PHONE.y + 40, t)
       } else {
         caption(ctx, 'Her mother. She almost let it ring.', easeOut((t - answeredAt) / 0.6), 110)
-        if (t - answeredAt > 0.6) tapHint(ctx, W - 50, 50, t)
+        if (t - answeredAt > 0.6) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

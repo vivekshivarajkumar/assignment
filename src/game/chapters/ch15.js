@@ -104,7 +104,7 @@ function comic(panels, captionText) {
         })
         const all = shown.length === panels.length
         if (all) caption(ctx, captionText, easeOut((t - shown[last] - 0.6) / 0.6))
-        if (all && t - shown[last] > 0.8) tapHint(ctx, W - 50, 50, t)
+        if (all && t - shown[last] > 0.8) tapHint(ctx, 50, 50, t)
       },
       down(x, y, t) {
         if (shown.length < panels.length) shown.push(t)
@@ -225,7 +225,7 @@ const fight = (api) => {
         if (swats === 0 && first && t - first.born > 0.4) tapHint(ctx, ...where(first), t)
       } else {
         caption(ctx, 'They said everything except what they meant.', easeOut((t - doneAt - 0.8) / 0.6))
-        if (t - doneAt > 1.2) tapHint(ctx, W - 50, 50, t)
+        if (t - doneAt > 1.2) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -409,7 +409,7 @@ const unsaid = (api) => {
       }
       if (doneAt !== null) {
         caption(ctx, 'There was one word she could never find.', easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

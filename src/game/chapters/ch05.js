@@ -143,7 +143,7 @@ const dead = (api) => {
         const k = t - doneAt
         note(ctx, W + 20 - k * 40, 200 + Math.sin(k * 2) * 12, 1, C.arun, clamp(k - 0.6, 0, 0.8))
         caption(ctx, 'Nothing. For once, just the quiet.', easeOut((k - 0.3) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -231,7 +231,7 @@ const follow = (api) => {
         if (found < 2) text(ctx, 'tap the notes', W / 2, 110, { size: 32 })
       } else {
         caption(ctx, 'Somewhere nearby, someone was playing.', easeOut((t - doneAt - 0.6) / 0.6))
-        if (t - doneAt > 1) tapHint(ctx, W - 50, 50, t)
+        if (t - doneAt > 1) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

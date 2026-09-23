@@ -31,7 +31,7 @@ function comic(panels, captionText) {
         })
         const all = shown.length === panels.length
         if (all) caption(ctx, captionText, easeOut((t - shown[last] - 0.6) / 0.6))
-        if (all && t - shown[last] > 0.8) tapHint(ctx, W - 50, 50, t)
+        if (all && t - shown[last] > 0.8) tapHint(ctx, 50, 50, t)
       },
       down(x, y, t) {
         if (shown.length < panels.length) shown.push(t)
@@ -234,7 +234,7 @@ const pack = (api) => {
         }
       } else {
         caption(ctx, 'Everything fit in one box. That was the worst part.', easeOut((t - closedAt - 0.6) / 0.6), 110)
-        if (t - closedAt > 1) tapHint(ctx, W - 50, 50, t)
+        if (t - closedAt > 1) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

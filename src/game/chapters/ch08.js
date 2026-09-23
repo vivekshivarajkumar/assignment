@@ -282,7 +282,7 @@ const tidy = (api) => {
         ctx.restore()
         text(ctx, 'ding dong!', W / 2, 80, { size: 36, color: C.arun, alpha: fade(t, doneAt) })
         caption(ctx, late ? 'Nearly. The rest went under the rug.' : 'Just in time.', fade(t, doneAt + 0.2))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -453,7 +453,7 @@ const door = (api) => {
       } else if (doneAt === null && t - openAt > 1) doneAt = t
       if (doneAt !== null) {
         caption(ctx, 'She brought a plant. And a smile.', fade(t, doneAt))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

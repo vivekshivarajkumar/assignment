@@ -22,7 +22,7 @@ export function vignette(draw, captionText, { wait = 0.8 } = {}) {
       paper(ctx)
       draw(ctx, t)
       caption(ctx, captionText, easeOut((t - 0.3) / 0.6))
-      if (t > wait) tapHint(ctx, W - 50, 50, t)
+      if (t > wait) tapHint(ctx, 50, 50, t)
     },
     down(x, y, t) {
       if (t > wait) api.finish()

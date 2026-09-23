@@ -1,124 +1,13 @@
-// Chapter 1 · Morning — the alarm, the toothbrush, the same grey day again.
+// Chapter 1 · Morning — the alarm (ch01-wake.js), the toothbrush, the same grey day again.
 import { vignette } from '../engine.js'
 import {
-  W, H, C, paper, wash, blob, line, text, tapHint, windowFrame, panel, label,
-  mira, person, rng, clamp, dist, easeOut, lerp,
+  W, H, C, paper, wash, blob, text, tapHint, panel, label,
+  mira, person, rng, clamp, easeOut, lerp,
 } from '../paint.js'
-import { pop, tone } from '../sound.js'
+import { pop } from '../sound.js'
+import wakeUp from './ch01-wake.js'
 
 const GREY = 0.65 // Mira's colour is mostly drained in Act I
-
-function bedroom(ctx) {
-  wash(ctx, 0, 0, W, H, C.greyLight, 101)
-  windowFrame(ctx, 300, 120, 180, 220, '#c8cdd2', 102)
-  wash(ctx, 0, 640, W, 320, C.grey, 103)
-  // bed and pillow
-  wash(ctx, 40, 560, 380, 120, '#cfcac3', 104)
-  wash(ctx, 50, 540, 110, 50, C.cream, 124)
-  wash(ctx, 30, 520, 30, 200, C.greyDark, 105)
-}
-
-function sleepingMira(ctx, sitUp) {
-  ctx.save()
-  if (sitUp) {
-    mira(ctx, 200, 690, { pose: 'sit', grey: GREY, eyes: 'down' })
-  } else {
-    ctx.translate(360, 610)
-    ctx.rotate(-Math.PI / 2)
-    mira(ctx, 0, 0, { s: 0.9, grey: GREY, eyes: 'closed' })
-  }
-  ctx.restore()
-  // blanket
-  wash(ctx, sitUp ? 150 : 170, 580, sitUp ? 270 : 250, 110, '#a9b1ba', 106)
-}
-
-function alarmClock(ctx, x, y, ringing, t) {
-  const shake = ringing ? Math.sin(t * 60) * 5 : 0
-  ctx.save()
-  ctx.translate(x + shake, y)
-  blob(ctx, 0, 0, 44, 44, ringing ? '#d9826f' : C.greyDark, 107)
-  ctx.fillStyle = C.cream
-  ctx.beginPath()
-  ctx.arc(0, 0, 32, 0, Math.PI * 2)
-  ctx.fill()
-  line(ctx, 0, 0, 0, -22, C.ink, 4, 1)
-  line(ctx, 0, 0, 16, 6, C.ink, 4, 2)
-  for (const d of [-1, 1]) {
-    blob(ctx, d * 30, -40, 14, 12, C.ink, 108 + d)
-  }
-  ctx.restore()
-  if (ringing) {
-    for (let i = 0; i < 3; i++) {
-      const k = (t * 3 + i / 3) % 1
-      ctx.save()
-      ctx.globalAlpha = 1 - k
-      ctx.strokeStyle = C.ink
-      ctx.lineWidth = 3
-      for (const d of [-1, 1]) {
-        ctx.beginPath()
-        ctx.arc(x, y, 55 + k * 40, d < 0 ? Math.PI - 0.5 : -0.5, d < 0 ? Math.PI + 0.5 : 0.5)
-        ctx.stroke()
-      }
-      ctx.restore()
-    }
-  }
-}
-
-// Tap the alarm. It snoozes, rings again, and on the third tap Mira gets up.
-const alarm = (api) => {
-  const CLOCK = { x: W / 2, y: 750 }
-  let taps = 0
-  let quietAt = -10
-  let ringing = true
-  let doneAt = null
-  let lastBeep = 0
-  return {
-    draw(ctx, t) {
-      paper(ctx, '#3b3f4a')
-      if (!ringing && taps < 3 && t - quietAt > 1.6) ringing = true
-      if (ringing && t - lastBeep > 0.5) {
-        lastBeep = t
-        tone(1320, 0.15, { type: 'square', gain: 0.03 })
-      }
-      // top panel: the bedroom (a crop of the full room)
-      panel(ctx, 20, 20, W - 40, 520, (ctx) => {
-        ctx.translate(-20, -230)
-        bedroom(ctx)
-        wash(ctx, 390, 560, 110, 150, '#bdb4a8', 109)
-        sleepingMira(ctx, doneAt !== null)
-      })
-      // bottom panel: the alarm clock close-up
-      const a2 = easeOut((t - 0.5) / 0.5)
-      panel(ctx, 20, 600, W - 40, 340, (ctx, w, h) => {
-        wash(ctx, 0, 0, w, h, '#cfd3d6', 130)
-        wash(ctx, -10, 210, w + 20, 140, '#a8a39b', 131)
-        ctx.translate(w / 2, 150)
-        ctx.scale(1.9, 1.9)
-        alarmClock(ctx, 0, 0, ringing, t)
-      }, { alpha: a2 })
-      label(ctx, doneAt === null ? 'Mira, 25 years old' : 'Every day starts the same way.', W / 2, 565, a2)
-      if (doneAt === null) {
-        if (ringing && t > 1) {
-          text(ctx, taps === 0 ? 'tap the alarm' : 'again...', W / 2, 910, { size: 28, color: C.ink })
-          tapHint(ctx, CLOCK.x, CLOCK.y - 110, t)
-        }
-      } else tapHint(ctx, W - 50, 50, t, C.cream)
-    },
-    down(x, y, t) {
-      if (doneAt !== null) {
-        if (t - doneAt > 0.6) api.finish()
-        return
-      }
-      if (ringing && t > 0.8 && dist(x, y, CLOCK.x, CLOCK.y) < 130) {
-        ringing = false
-        quietAt = t
-        taps += 1
-        pop(300)
-        if (taps === 3) doneAt = t
-      }
-    },
-  }
-}
 
 // Drag back and forth across the teeth. Foam builds up; enough strokes and she's done.
 const brush = (api) => {
@@ -194,7 +83,7 @@ const brush = (api) => {
         if (!dragging) tapHint(ctx, bx, 490, t)
       } else {
         label(ctx, 'Brush. Rinse. Repeat.', W / 2, 740, easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -254,5 +143,5 @@ const leaving = vignette((ctx, t) => {
 
 export default {
   title: 'Morning',
-  pages: [alarm, brush, leaving],
+  pages: [wakeUp, brush, leaving],
 }

@@ -209,7 +209,7 @@ const colouring = (api) => {
         }
       } else {
         caption(ctx, 'She painted the sky whatever colour she liked.', easeOut((t - doneAt - 0.4) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -291,7 +291,7 @@ const sensible = (api) => {
       }
       if (t > END - 0.4) {
         caption(ctx, 'So she put the paints away, and grew up sensible.', easeOut((t - END + 0.4) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, rt) {

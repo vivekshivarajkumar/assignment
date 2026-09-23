@@ -421,7 +421,7 @@ const walk = (api) => {
         }
       } else {
         caption(ctx, 'At the end of the room, the first one.', easeOut((t - doneAt - 0.3) / 0.6))
-        if (t - doneAt > 0.8) tapHint(ctx, W - 50, 50, t)
+        if (t - doneAt > 0.8) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -502,7 +502,7 @@ const song = (api) => {
       }))
       if (t > 3.6) {
         caption(ctx, 'A song she knew by heart. She smiled.', easeOut((t - 3.6) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

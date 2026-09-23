@@ -218,7 +218,7 @@ const feed = (api) => {
         if (v && !press) tapHint(ctx, v[1], v[2], t)
       } else {
         caption(ctx, 'Like. Scroll. Like. None of it feels like anything.', easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

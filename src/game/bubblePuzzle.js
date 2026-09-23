@@ -160,9 +160,9 @@ export function bubblePuzzle({ bubbles, scene, caption: captionText }) {
           const age = arr.length - k
           ctx.save()
           ctx.globalAlpha = 1 - (age - 1) * 0.25
-          // keep clear of the home button in the top-left corner
-          const x = b.speaker === 'arun' ? W - 30 - BW * s : 96
-          ctx.translate(x, 30 + k * 76)
+          // start below the home button (top-right) and the tap hint (top-left)
+          const x = b.speaker === 'arun' ? W - 30 - BW * s : 30
+          ctx.translate(x, 92 + k * 68)
           ctx.scale(s, s)
           const sp = SPEAKER[b.speaker]
           bubbleBody(ctx, sp.fill, sp.tail)
@@ -172,7 +172,7 @@ export function bubblePuzzle({ bubbles, scene, caption: captionText }) {
 
         if (doneAt !== null) {
           caption(ctx, captionText, easeOut((t - doneAt) / 0.6))
-          tapHint(ctx, W - 50, 50, t)
+          tapHint(ctx, 50, 50, t)
           return
         }
 

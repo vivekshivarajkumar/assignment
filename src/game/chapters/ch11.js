@@ -257,7 +257,7 @@ const unwrap = (api) => {
           line(ctx, sx, sy - 9 * a, sx, sy + 9 * a, '#fff6d8', 3, 2)
         }
         caption(ctx, 'A paint set. Nobody had given her one since she was nine.', easeOut((t - doneAt - 0.4) / 0.6))
-        if (t - doneAt > 0.6) tapHint(ctx, W - 50, 50, t)
+        if (t - doneAt > 0.6) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -461,7 +461,7 @@ const sketch = (api) => {
         if (!pointer) tapHint(ctx, SX + 80 + ((t * 0.5) % 1) * (SW - 160), SY + 220, t)
       } else {
         caption(ctx, "She hadn't painted since she was nine. Her hands remembered.", easeOut((t - doneAt - 0.8) / 0.6))
-        if (t - doneAt > 1) tapHint(ctx, W - 50, 50, t)
+        if (t - doneAt > 1) tapHint(ctx, 50, 50, t)
       }
       if (pointer) brush(ctx, pointer.x, pointer.y, PANS[tip % PANS.length])
     },

@@ -395,7 +395,7 @@ const painting = (api) => {
       }
       if (doneAt !== null) {
         caption(ctx, 'Sixteen years later. Not perfect. Hers.', easeOut((t - doneAt - 0.4) / 0.6))
-        if (t - doneAt > 0.8) tapHint(ctx, W - 50, 50, t)
+        if (t - doneAt > 0.8) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -660,7 +660,7 @@ const letter = (api) => {
       } else if (doneAt === null && t - stampedAt > 2.4) doneAt = t
       if (doneAt !== null) {
         caption(ctx, 'On Monday, the numbers learned to add up without her.', easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

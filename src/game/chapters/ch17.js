@@ -30,7 +30,7 @@ function comic(panels, captionText) {
         })
         const all = shown.length === panels.length
         if (all) caption(ctx, captionText, easeOut((t - shown[last] - 0.6) / 0.6))
-        if (all && t - shown[last] > 0.8) tapHint(ctx, W - 50, 50, t)
+        if (all && t - shown[last] > 0.8) tapHint(ctx, 50, 50, t)
       },
       down(x, y, t) {
         if (shown.length < panels.length) shown.push(t)
@@ -253,7 +253,7 @@ const remember = (api) => {
       } else {
         blob(ctx, BED.x, BED.y, 30, 12, '#f2c14e', 1790, 0.8)
         caption(ctx, 'Something under the bed caught the light.', easeOut((t - foundAt) / 0.6), 110)
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -354,7 +354,7 @@ const paintSet = (api) => {
         tapHint(ctx, box.x, box.y, t)
       } else {
         caption(ctx, "His birthday gift. She hadn't touched it since.", easeOut((t - openedAt - 0.8) / 0.6))
-        if (t - openedAt > 1.2) tapHint(ctx, W - 50, 50, t)
+        if (t - openedAt > 1.2) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

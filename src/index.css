@@ -52,13 +52,13 @@ button {
 .home {
   position: absolute;
   top: 2.5%;
-  left: 4%;
+  right: 4%;
   width: 52px;
   height: 52px;
   border: none;
   border-radius: 50%;
-  background: rgba(220, 216, 210, 0.75);
-  color: #2f2b33;
+  background: rgba(200, 206, 212, 0.85);
+  color: #1b1d22;
   display: grid;
   place-items: center;
 }

@@ -200,7 +200,7 @@ const walkHome = (api) => {
       }
       if (doneAt !== null) {
         caption(ctx, 'Both of them looked back.', easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t, C.cream)
+        tapHint(ctx, 50, 50, t, C.cream)
       }
       if (lookAt !== null && doneAt === null && t - lookAt > 1) doneAt = t
     },

@@ -224,7 +224,7 @@ const albumPage = (api) => {
           ctx.restore()
         }
         caption(ctx, 'Sand, films, rain, burnt pasta.', k)
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

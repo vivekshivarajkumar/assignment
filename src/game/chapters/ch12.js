@@ -108,7 +108,7 @@ const posters = (api) => {
         if (!held && left > 0) tapHint(ctx, STACK.x, STACK.y, t, C.cream)
       } else {
         caption(ctx, 'She put one on every wall between home and the club.', easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t, C.cream)
+        tapHint(ctx, 50, 50, t, C.cream)
       }
     },
     down(x, y, t) {
@@ -274,7 +274,7 @@ const rhythm = (api) => {
           ctx.restore()
         }
         caption(ctx, 'By the last song, the whole room was clapping with her.', easeOut((t - doneAt - 0.3) / 0.6))
-        if (t - doneAt > 0.6) tapHint(ctx, W - 50, 50, t, C.cream)
+        if (t - doneAt > 0.6) tapHint(ctx, 50, 50, t, C.cream)
       }
     },
     down(x, y, t) {

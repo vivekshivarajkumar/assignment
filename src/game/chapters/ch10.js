@@ -238,7 +238,7 @@ const shelf = (api) => {
       } else {
         heart(ctx, W / 2, 110 - fade(t, doneAt) * 20, 1.2 * fade(t, doneAt), C.rose)
         caption(ctx, 'There was room after all.', fade(t, doneAt))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

@@ -236,7 +236,7 @@ const sheet = (api) => {
         }
       } else {
         caption(ctx, 'Somewhere between the numbers, the day was gone.', easeOut((t - doneAt - 0.8) / 0.6))
-        if (t - doneAt > 1.2) tapHint(ctx, W - 50, 50, t)
+        if (t - doneAt > 1.2) tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {

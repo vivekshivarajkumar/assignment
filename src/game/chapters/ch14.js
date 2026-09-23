@@ -124,7 +124,7 @@ const calendar = (api) => {
         if (flipAt === null) tapHint(ctx, CAL.x + CAL.w - 40, CAL.y + CAL.h - 40, t)
       } else {
         caption(ctx, 'His dates filled in. Their free days quietly disappeared.', easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t)
+        tapHint(ctx, 50, 50, t)
       }
     },
     down(x, y, t) {
@@ -242,7 +242,7 @@ const bed = (api) => {
         }
       } else {
         caption(ctx, "He was already asleep. She didn't wake him.", easeOut((t - doneAt) / 0.6))
-        tapHint(ctx, W - 50, 50, t, C.cream)
+        tapHint(ctx, 50, 50, t, C.cream)
       }
     },
     down(x, y, t) {

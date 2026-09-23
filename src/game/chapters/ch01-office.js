@@ -2,7 +2,8 @@
 // The camera pans on from the 08:58 clock to Mira at her desk, seen from
 // behind. Below is a grid of amounts: tap two that match to clear them. When
 // every pair is cleared the grid fills with new numbers; the bar fills as she
-// works through them. Same 900 x 2000 phone sheet as the other pages.
+// works through them. Then the camera pans on to the clock as the day runs
+// on to 02:29. Same 900 x 2000 phone sheet as the other pages.
 import { W, tapHint, rng, easeInOut } from '../paint.js'
 import { pop } from '../sound.js'
 import { K, ink, shape, bigDisplay, border, sheetTop } from './ch01-wake.js'
@@ -36,6 +37,12 @@ const ROUNDS = [
   [64, 5, 19, 5, 330, 64, 19, 330, 26],
 ]
 const PAIRS = ROUNDS.length * 4
+const PANEL_X = 1076 // where the next clock close-up starts, to the right
+// once she's done, the clock runs through the day, 08:58 to 14:29 (shown 02:29)
+const FROM = 8 * 60 + 58
+const TO = 14 * 60 + 29
+const TICK = 0.012
+const hhmm12 = (m) => `${String(((Math.floor(m / 60) + 11) % 12) + 1).padStart(2, '0')}${String(m % 60).padStart(2, '0')}`
 
 // Smooth ink stroke through points (curves through midpoints, no corners).
 function curve(ctx, pts, width = 6) {
@@ -369,6 +376,10 @@ export default function officeWork(api) {
     cells = ROUNDS[round].map((value) => ({ value, selected: false, clearedAt: null, wrongAt: null }))
   }
   deal()
+  const panOut = (t) => (doneAt === null ? 0 : easeInOut((t - doneAt - 0.9) / 1.6) * PANEL_X)
+  const tickStart = () => doneAt + 2.6
+  const minuteAt = (t) => Math.min(TO, FROM + Math.max(0, Math.floor((t - tickStart()) / TICK)))
+  const countDone = (t) => doneAt !== null && t > tickStart() + (TO - FROM) * TICK + 0.4
   const open = () => cells.filter((c) => c.clearedAt === null)
   // a round is over when no two open cells match
   const roundOver = () => {
@@ -400,7 +411,7 @@ export default function officeWork(api) {
         round += 1
         deal()
       }
-      const offset = (1 - easeInOut(t / PAN_TIME)) * PAN
+      const offset = (1 - easeInOut(t / PAN_TIME)) * PAN - panOut(t)
       ctx.save()
       ctx.scale(0.6, 0.6)
       ctx.translate(offset, -top())
@@ -420,6 +431,20 @@ export default function officeWork(api) {
       bar(ctx, matched / PAIRS)
       grid(ctx, cells, t)
 
+      // the clock close-up to the right, which we pan to once she's done
+      if (doneAt !== null) {
+        const bottom = top() + h / 0.6
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(PANEL_X - 6, top(), 1000, bottom - top())
+        border(ctx, PANEL_X - 15, top(), bottom)
+        const m = minuteAt(t)
+        const tick = (t - tickStart()) / TICK
+        ctx.save()
+        ctx.translate(PANEL_X, 0)
+        bigDisplay(ctx, hhmm12(m), m < TO && tick > 0 ? 3 : -1, m < TO && tick > 0 ? tick % 1 : 0)
+        ctx.restore()
+      }
+
       // the 08:58 clock we're panning away from, to the left
       if (offset > 0) {
         const bottom = top() + h / 0.6
@@ -437,11 +462,11 @@ export default function officeWork(api) {
         const [x, y] = toScreen(GRID.x + GRID.cw * 1.5, GRID.y + GRID.ch / 2)
         tapHint(ctx, x, y - 30, t, K.ink)
       }
-      if (doneAt !== null && t - doneAt > 0.8) tapHint(ctx, 50, 50, t)
+      if (countDone(t)) tapHint(ctx, 50, 50, t)
     },
     down(x, y, t) {
       if (doneAt !== null) {
-        if (t - doneAt > 0.8) api.finish()
+        if (countDone(t)) api.finish()
         return
       }
       if (t < PAN_TIME || nextRoundAt !== null) return

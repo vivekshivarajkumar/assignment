@@ -1,4 +1,4 @@
-import { W, FONT, paper, rng, easeOut } from './paint.js'
+import { W, H, UI_FONT, rng, easeOut } from './paint.js'
 import { pop } from './sound.js'
 import tokens from '../../tokens.json'
 
@@ -130,9 +130,10 @@ const grain = (() => {
   return Array.from({ length: 900 }, () => [r() * 640 - 100, 950 + r() * 700, r(), r()])
 })()
 
-function portrait(ctx, t) {
+// Drawn on a 900 x 2000 phone sheet, anchored to the bottom of the screen.
+function portrait(ctx, t, height) {
   ctx.save()
-  ctx.translate(0, -240 + Math.sin(t * 1.1) * 1.2)
+  ctx.translate(0, height - 1200 + Math.sin(t * 1.1) * 1.2)
   ctx.scale(0.6, 0.6)
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
@@ -287,10 +288,16 @@ export default function titleScreen(hasSave) {
 
   return (api) => {
     let picked = null
+    // on a phone the screen is taller than H: the menu stays at the bottom and
+    // the title sits about a sixth of the way down, as in a portrait layout
+    const dy = () => api.height() - H
+    const titleY = () => 135 + dy() * 0.3
     return {
+      tall: true,
       draw(ctx, t) {
-        paper(ctx, BG)
-        portrait(ctx, t)
+        ctx.fillStyle = BG
+        ctx.fillRect(0, 0, W, api.height())
+        portrait(ctx, t, api.height())
         const a = easeOut(t / 1.2)
         ctx.save()
         ctx.globalAlpha = a
@@ -298,33 +305,27 @@ export default function titleScreen(hasSave) {
         ctx.fillStyle = INK
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText('mira', W / 2, 135)
+        ctx.fillText('mira', W / 2, titleY())
         // how much Claude it took to build this game (tokens.json)
         ctx.globalAlpha = a * 0.8
-        ctx.font = `24px ${FONT}`
-        ctx.fillText(`built with Claude · ${tokens.total.tokens.toLocaleString('en-US')} tokens`, W / 2, 232)
+        ctx.font = `22px ${UI_FONT}`
+        ctx.fillText(`built with Claude · ${tokens.total.tokens.toLocaleString('en-US')} tokens`, W / 2, titleY() + 97)
         ctx.restore()
         for (const row of rows) {
           const isBig = row.key === big
           ctx.save()
           ctx.globalAlpha = a * (picked && picked !== row.key ? 0.4 : 1)
-          ctx.font = `${isBig ? 50 : 36}px ${FONT}`
+          ctx.font = isBig ? `700 44px ${UI_FONT}` : `700 30px ${UI_FONT}`
           ctx.fillStyle = INK
           ctx.textAlign = 'right'
           ctx.textBaseline = 'middle'
-          ctx.fillText(row.label, W - 44, row.y)
-          if (isBig) {
-            // a touch heavier, like a bold weight
-            ctx.strokeStyle = INK
-            ctx.lineWidth = 1.4
-            ctx.strokeText(row.label, W - 44, row.y)
-          }
+          ctx.fillText(row.label, W - 44, row.y + dy())
           ctx.restore()
         }
       },
       down(x, y, t) {
         if (t < 0.4 || picked || x < W / 2) return
-        const row = rows.find((r) => Math.abs(y - r.y) < 28)
+        const row = rows.find((r) => Math.abs(y - r.y - dy()) < 28)
         if (!row) return
         picked = row.key
         pop(660)

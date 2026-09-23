@@ -1,8 +1,9 @@
 // Chapter 1, page 1 · 7:00
 // Top-down view of Mira asleep, a torn label with her name, and a flip clock
-// that turns to 7:00 and rings until it's tapped. Drawn on a 900 x 2000 sheet
-// shown at (x * 0.6, (y - 190) * 0.6), in the cold grey-blue of her mornings.
-import { W, FONT, paper, tapHint, rng, clamp, easeOut } from '../paint.js'
+// that turns to 7:00 and rings until it's tapped. Drawn on a 900 x 2000 phone
+// sheet at 0.6 scale, in the cold grey-blue of her mornings. On a phone the whole
+// sheet shows; on a shorter screen the top of the headboard is cropped.
+import { W, UI_FONT, tapHint, rng, clamp, easeOut } from '../paint.js'
 import { pop, tone } from '../sound.js'
 
 const SANS = "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
@@ -100,12 +101,18 @@ const BODY = [
   [180, 1080], [196, 920], [250, 860], [360, 820], [520, 796], [640, 790], [780, 786],
   [846, 820], [852, 890], [820, 914], [650, 906], [600, 1040],
 ]
-// forearm up the side of the pillow, hand over its top corner
+// forearm up the side of the pillow to the wrist
 const ARM = [
-  [792, 870], [800, 740], [796, 600], [786, 520], [770, 494], [776, 470], [796, 446],
-  [828, 438], [858, 446], [884, 466], [896, 500], [890, 560], [884, 660], [884, 780],
+  [792, 870], [800, 740], [798, 620], [806, 590], [864, 592], [880, 640], [884, 780],
   [872, 880], [840, 904],
 ]
+// hand gripping the pillow's top corner: palm, fingers curled over the edge
+const HAND = [
+  [804, 604], [790, 560], [782, 520], [784, 478], [798, 452], [826, 440], [856, 444],
+  [880, 458], [894, 482], [892, 520], [878, 560], [866, 600],
+]
+// thumb along the inside of the pillow
+const THUMB = [[792, 560], [770, 530], [764, 500], [774, 484], [790, 500], [800, 534]]
 const HAIR = [
   [290, 560], [330, 500], [400, 462], [480, 452], [560, 470], [600, 492], [630, 510],
   [604, 526], [628, 548], [600, 556], [616, 582], [586, 590], [570, 610], [548, 660],
@@ -163,16 +170,21 @@ function sleeper(ctx) {
   shape(ctx, BODY, K.white)
   shadeInside(ctx, BODY, [[560, 830], [790, 800], [860, 930], [610, 1080], [540, 900]], K.shade)
   shape(ctx, BODY, null)
-  // forearm and hand gripping the pillow's corner
+  // forearm, hand and thumb gripping the pillow's corner
   shape(ctx, ARM, K.white)
-  shadeInside(ctx, ARM, [[780, 600], [812, 600], [818, 900], [780, 900]], K.shade)
+  shadeInside(ctx, ARM, [[780, 620], [814, 620], [818, 900], [780, 900]], K.shade)
   shape(ctx, ARM, null)
+  shape(ctx, HAND, K.white)
+  shadeInside(ctx, HAND, [[860, 520], [900, 500], [900, 610], [860, 610]], K.shade)
+  shape(ctx, HAND, null)
+  // knuckle creases and the gaps between fingers
   for (const s of [
-    [[814, 442], [816, 470], [812, 488]],
-    [[842, 444], [846, 474], [842, 494]],
-    [[868, 456], [870, 486], [866, 504]],
-    [[776, 492], [792, 510], [800, 540]],
+    [[818, 444], [822, 470], [818, 492]],
+    [[846, 446], [852, 474], [850, 498]],
+    [[872, 456], [876, 482], [874, 504]],
+    [[808, 520], [834, 516], [860, 522]],
   ]) ink(ctx, s, 5)
+  shape(ctx, THUMB, K.white)
   // vest straps
   for (const [x1, y1, x2, y2] of [[300, 836, 322, 1010], [506, 800, 500, 990]]) {
     ctx.lineCap = 'round'
@@ -247,7 +259,23 @@ function quilt(ctx) {
   for (const s of [[[700, 1080], [760, 1110], [800, 1150]], [[730, 1180], [770, 1200], [800, 1240]]]) ink(ctx, s, 4)
 }
 
+// The bedroom picture ends in a torn edge below the name label; white below.
+function tornBottom(ctx) {
+  const r = rng(151)
+  ctx.beginPath()
+  ctx.moveTo(-40, 0)
+  ctx.lineTo(960, 0)
+  for (let x = 960; x >= -40; x -= 18) {
+    const base = 1455 + ((x + 40) / 1000) * 110 // lower on the right
+    ctx.lineTo(x, base + (r() - 0.5) * 22)
+  }
+  ctx.closePath()
+}
+
 function bedScene(ctx, t, ringing) {
+  ctx.save()
+  tornBottom(ctx)
+  ctx.clip()
   headboard(ctx)
   // mattress under everything
   ctx.fillStyle = K.sheet
@@ -256,6 +284,7 @@ function bedScene(ctx, t, ringing) {
   for (const s of [[[-10, 920], [60, 900], [120, 890]], [[780, 900], [860, 890], [920, 910]]]) ink(ctx, s, 4)
   sleeper(ctx)
   quilt(ctx)
+  ctx.restore()
 
   // she stirs while the alarm rings
   if (ringing) {
@@ -288,7 +317,7 @@ function nameLabel(ctx, alpha) {
   ctx.closePath()
   ctx.fill()
   ctx.fillStyle = K.ink
-  ctx.font = `52px ${FONT}`
+  ctx.font = `700 50px ${UI_FONT}`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('Mira Sen', 450, 1178)
@@ -434,18 +463,22 @@ function clockPanel(ctx, alpha, digits, flip, ringing, t) {
   ctx.restore()
 }
 
-const toScreen = (y) => (y - 190) * 0.6
+// Sheet rows 58..2000 are a phone screen; show from the top when there is room,
+// otherwise crop the headboard so the clock panel (to row 1790) stays in view.
+const sheetTop = (height) => Math.max(58, 1790 - height / 0.6)
 
-// 6:59 flips to 7:00, the alarm rings, tap the clock to stop it.
 export default function wakeUp(api) {
   const FLIP_AT = 1.6
   let stoppedAt = null
   let lastBeep = 0
+  const toScreen = (y) => (y - sheetTop(api.height())) * 0.6
   return {
+    tall: true,
     // test hook: where to tap to stop the alarm
     debug: () => ({ tap: [W / 2, toScreen(1560)] }),
     draw(ctx, t) {
-      paper(ctx, '#ffffff')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, W, api.height())
       const flip = clamp((t - FLIP_AT) / 0.35, 0, 1)
       const digits = flip < 0.5 ? ' 659' : ' 700'
       const ringing = flip >= 1 && stoppedAt === null
@@ -455,7 +488,7 @@ export default function wakeUp(api) {
       }
       ctx.save()
       ctx.scale(0.6, 0.6)
-      ctx.translate(0, -190)
+      ctx.translate(0, -sheetTop(api.height()))
       bedScene(ctx, t, ringing)
       clockPanel(ctx, easeOut((t - 0.5) / 0.6), digits, flip, ringing, t)
       nameLabel(ctx, easeOut((t - 0.9) / 0.6))

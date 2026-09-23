@@ -31,6 +31,8 @@ export const C = {
 }
 
 export const FONT = "'Patrick Hand', 'Comic Sans MS', cursive"
+// rounded sans for interface text: labels, menus, dialogs
+export const UI_FONT = "'Andika', 'Trebuchet MS', sans-serif"
 
 // ---------- math ----------
 

@@ -10,7 +10,7 @@
 //   down(x, y, t), move(x, y, t), up(x, y, t)   optional pointer handlers,
 //                                               in logical coordinates (W x H)
 
-import { W, H, C, FONT, paper, caption, tapHint, text, blob, note, easeOut } from './paint.js'
+import { W, H, FONT, paper, caption, tapHint, text, blob, easeOut } from './paint.js'
 
 export const memory = {}
 
@@ -70,23 +70,4 @@ export function titleCard(act, number, title) {
       if (t > 0.6) api.finish()
     },
   })
-}
-
-// Studio card shown once before the title screen. Tap or wait to skip.
-export function splash(api) {
-  return {
-    draw(ctx, t) {
-      ctx.fillStyle = '#fbfaf6'
-      ctx.fillRect(0, 0, W, H)
-      const a = easeOut(t / 0.8) * (1 - easeOut((t - 2.2) / 0.5))
-      // mark: a paint drop with a musical note inside
-      blob(ctx, W / 2, H / 2 - 60, 70, 70, C.mira, 88, a)
-      note(ctx, W / 2 - 6, H / 2 - 40, 1.4, C.ink, a)
-      text(ctx, 'painted in code', W / 2, H / 2 + 70, { size: 34, alpha: a })
-      if (t > 2.6) api.finish()
-    },
-    down() {
-      api.finish()
-    },
-  }
 }

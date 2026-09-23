@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Stage from './game/Stage.jsx'
-import { titleCard, splash } from './game/engine.js'
+import { titleCard } from './game/engine.js'
+import splash from './game/splash.js'
 import { CHAPTERS, ACTS } from './game/chapters/index.js'
 import titleScreen from './game/titleScreen.js'
 import { isMuted, setMuted } from './game/sound.js'

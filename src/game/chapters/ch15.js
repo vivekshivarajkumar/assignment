@@ -46,17 +46,41 @@ function room(ctx, t, storm = 0.3, dark = 0) {
   blob(ctx, -10, 10, 9, 22, g(C.mira), 1506)
   blob(ctx, 12, 10, 9, 22, g(C.arun), 1507)
   ctx.restore()
-  // lamp on a side table
-  wash(ctx, 420, 520, 90, 14, g('#7b5238'), 1508)
-  line(ctx, 465, 530, 465, 700, g('#5c3c2a'), 8, 1509)
-  blob(ctx, 465, 480, 34, 30, g(C.mira), 1510)
-  blob(ctx, 465, 500, 70, 60, '#fff3c4', 1511, 0.25)
+  // floor lamp, still on
+  blob(ctx, 470, 470, 80, 70, '#fff3c4', 1511, 0.3)
+  line(ctx, 470, 470, 470, 712, g('#5c3c2a'), 7, 1509)
+  blob(ctx, 470, 714, 26, 7, g('#5c3c2a'), 1508)
+  ctx.fillStyle = g(C.mira)
+  ctx.beginPath()
+  ctx.moveTo(446, 438)
+  ctx.lineTo(494, 438)
+  ctx.lineTo(510, 482)
+  ctx.lineTo(430, 482)
+  ctx.closePath()
+  ctx.fill()
   wash(ctx, 0, 700, W, 260, g('#9c7f63'), 1512)
+  // the sofa between them, nobody sitting on it
+  wash(ctx, 150, 560, 240, 70, g(C.teal, 0.45), 1514)
+  wash(ctx, 140, 620, 260, 80, g(C.teal, 0.4), 1515)
+  blob(ctx, 200, 610, 30, 22, g(C.rose), 1516)
+  line(ctx, 162, 698, 160, 714, g('#5c3c2a'), 6, 1517)
+  line(ctx, 378, 698, 380, 714, g('#5c3c2a'), 6, 1518)
   blob(ctx, 270, 870, 220, 42, g(C.teal), 1513, 0.6)
   if (dark > 0) {
     ctx.fillStyle = `rgba(40,40,60,${dark})`
     ctx.fillRect(0, 0, W, H)
   }
+}
+
+function mug(ctx, x, y, color, seed) {
+  wash(ctx, x - 15, y - 30, 30, 30, color, seed)
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.arc(x + 17, y - 15, 8, -1.3, 1.3)
+  ctx.stroke()
+  ctx.restore()
 }
 
 // Comic page: panels appear one after another; a tap brings the next one sooner,
@@ -291,6 +315,7 @@ function piece(ctx, i, outline) {
     ctx.lineWidth = 3
     roundRect(ctx, 0, 0, PW, PH, 24)
     ctx.stroke()
+    ctx.clip()
     piecePath(ctx, i)
     ctx.stroke()
   }
@@ -326,11 +351,12 @@ const unsaid = (api) => {
         })
         tone(98, 1.2, { type: 'sine', gain: 0.1 })
       }
-      if (fallAt !== null && doneAt === null && t - fallAt > 1.3) doneAt = t
+      if (fallAt !== null && doneAt === null && t - fallAt > 1.1) doneAt = t
 
       // the gap where the missing piece should be
       ctx.save()
       ctx.translate(PX, PY)
+      if (fallAt !== null) ctx.globalAlpha = clamp(1 - (t - fallAt) / 1.5, 0.35, 1)
       ctx.setLineDash([10, 10])
       ctx.strokeStyle = 'rgba(47,43,51,0.3)'
       ctx.lineWidth = 3
@@ -355,8 +381,7 @@ const unsaid = (api) => {
         }
         if (fallAt !== null) {
           p.vy += 1400 * dt
-          p.y = Math.min(p.y + p.vy * dt, 800 - PH / 2)
-          if (p.y >= 800 - PH / 2) p.spin *= 0.8
+          p.y += p.vy * dt
           p.rot += p.spin * dt
         }
         const [cx, cy] = centre(p)
@@ -435,11 +460,11 @@ const morning = comic(
       x: 40, y: 110, w: 460, h: 380, hold: 1.8,
       draw(ctx, w, h, t) {
         wash(ctx, 0, 0, w, h, g('#cdb89c'), 1540)
-        // front door, a coat hook, pale morning light
+        // front door, an empty coat hook, pale morning light
+        windowFrame(ctx, 30, 50, 100, 150, g('#e8dcc0'), 1544)
         wash(ctx, 250, 40, 150, 320, g('#7b5a44'), 1541)
         blob(ctx, 380, 210, 7, 7, C.ink, 1542)
         wash(ctx, 0, 330, w, 60, g('#9c7f63'), 1543)
-        blob(ctx, 90, 60, 60, 40, '#fff3c4', 1544, 0.4)
         arun(ctx, 200, 350, { s: 0.95, grey: GREY, facing: 1, eyes: 'down' })
         // suitcase at his side
         const lift = Math.min(1, t / 1.2) * 4
@@ -456,9 +481,13 @@ const morning = comic(
         wash(ctx, 0, 0, w, h, g('#d6c6ae'), 1550)
         windowFrame(ctx, 300, 30, 120, 120, g('#c8cdd2'), 1551)
         wash(ctx, 0, 190, w, 90, g('#8a6d55'), 1552)
-        mira(ctx, 130, 380, { grey: GREY, pose: 'sit', eyes: 'down', mouth: 'sad' })
-        wash(ctx, 120, 175, 240, 20, g('#7b5238'), 1553)
-        wash(ctx, 250, 145, 30, 30, g(C.mira), 1554)
+        mira(ctx, 140, 330, { s: 0.9, grey: GREY, pose: 'sit', eyes: 'down', mouth: 'sad' })
+        wash(ctx, 200, 185, 230, 18, g('#7b5238'), 1553)
+        line(ctx, 225, 200, 225, 280, g('#5c3c2a'), 8, 1555)
+        line(ctx, 405, 200, 405, 280, g('#5c3c2a'), 8, 1556)
+        // two mugs, one of them cold
+        mug(ctx, 262, 185, g(C.mira), 1554)
+        mug(ctx, 362, 185, g(C.arun), 1557)
       },
     },
   ],

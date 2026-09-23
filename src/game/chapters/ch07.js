@@ -11,6 +11,18 @@ import { pop, tone, MELODY } from '../sound.js'
 // Fades a panel in from time t0 (used to reveal comic panels one after another).
 const fade = (t, t0) => easeOut((t - t0) / 0.5)
 
+// Comic panel that pops in at time t0 (washes ignore globalAlpha, so it scales in too).
+function reveal(ctx, t, t0, x, y, w, h, draw) {
+  if (t < t0) return
+  const k = easeOut((t - t0) / 0.4)
+  ctx.save()
+  ctx.translate(x + w / 2, y + h / 2)
+  ctx.scale(lerp(0.9, 1, k), lerp(0.9, 1, k))
+  ctx.translate(-(x + w / 2), -(y + h / 2))
+  panel(ctx, x, y, w, h, draw, { alpha: k })
+  ctx.restore()
+}
+
 // Warm café interior sized to a w x h box; the floor starts at `floor`.
 function cafe(ctx, w, h, floor) {
   wash(ctx, -10, -10, w + 20, h + 20, '#ead3b4', 701)
@@ -64,7 +76,7 @@ function cup(ctx, x, y, color, t, seed, s = 1) {
 }
 
 const arrive = vignette((ctx, t) => {
-  panel(ctx, 30, 100, 480, 400, (c, w, h) => {
+  reveal(ctx, t, 0.8, 30, 100, 480, 400, (c, w, h) => {
     cafe(c, w, h, 330)
     mira(c, 100, 395, { s: 0.75, pose: 'sit', mouth: 'smile' })
     arun(c, 380, 395, { s: 0.75, pose: 'sit', facing: -1, mouth: 'smile' })
@@ -77,11 +89,11 @@ const arrive = vignette((ctx, t) => {
   panel(ctx, 30, 540, 230, 210, (c, w, h) => {
     wash(c, -10, -10, w + 20, h + 20, '#f2c98a', 726)
     mira(c, 110, 560, { s: 1.6, mouth: 'smile', eyes: 'down' })
-  }, { alpha: fade(t, 0.8) })
-  panel(ctx, 280, 540, 230, 210, (c, w, h) => {
+  })
+  reveal(ctx, t, 1.3, 280, 540, 230, 210, (c, w, h) => {
     wash(c, -10, -10, w + 20, h + 20, '#e8b8a0', 727)
     arun(c, 120, 560, { s: 1.6, facing: -1, mouth: 'smile' })
-  }, { alpha: fade(t, 1.3) })
+  })
 }, 'He was early. So was she.', { wait: 1.6 })
 
 // Custom pictogram: Mira's desk, a stack of papers and a grey calculator.
@@ -213,7 +225,7 @@ const walkHome = (api) => {
 
 // Her room at night, and the message he sent: a little tune and a heart.
 const buzz = vignette((ctx, t) => {
-  panel(ctx, 30, 100, 480, 360, (c, w, h) => {
+  reveal(ctx, t, 0.9, 30, 100, 480, 360, (c, w, h) => {
     wash(c, -10, -10, w + 20, h + 20, '#4a4a70', 770)
     windowFrame(c, 40, 40, 150, 180, C.night, 771)
     blob(c, 140, 90, 18, 18, C.cream, 772)
@@ -254,7 +266,7 @@ const buzz = vignette((ctx, t) => {
         c.stroke()
       }
     }
-  }, { alpha: fade(t, 0.9) })
+  })
 }, 'For once, she smiled at her phone.', { wait: 1.8 })
 
 export default {

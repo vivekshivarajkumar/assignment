@@ -298,7 +298,7 @@ const rhythm = (api) => {
 }
 
 const club = vignette((ctx, t) => {
-  panel(ctx, 30, 100, 480, 420, (ctx, w, h) => {
+  panel(ctx, 30, 100, 480, 420, (ctx) => {
     ctx.translate(-30, -60)
     stage(ctx, t, 0.3)
     arun(ctx, 270, 500, { s: 0.85, facing: -1, eyes: 'down' })
@@ -307,7 +307,7 @@ const club = vignette((ctx, t) => {
   })
   panel(ctx, 30, 560, 480, 230, (ctx, w, h) => {
     wash(ctx, 0, 0, w, h, '#2e2b45', 1251)
-    CROWD.slice(0, 11).forEach((f, i) => fan(ctx, f.x - 30, f.y - 520, f.s, f.top, f.hair, 0, t, false))
+    CROWD.slice(0, 11).forEach((f) => fan(ctx, f.x - 30, f.y - 520, f.s, f.top, f.hair, 0, t, false))
     mira(ctx, 250, 420, { pose: 'wave', t, mouth: 'smile' })
     CROWD.slice(11).forEach((f) => fan(ctx, f.x - 30, f.y - 520, f.s, f.top, f.hair, 0, t, false))
   }, { alpha: easeOut((t - 0.6) / 0.5) })
@@ -315,7 +315,7 @@ const club = vignette((ctx, t) => {
 }, 'A room full of strangers. He looked for one face.')
 
 const after = vignette((ctx, t) => {
-  panel(ctx, 30, 100, 480, 420, (ctx, w, h) => {
+  panel(ctx, 30, 100, 480, 420, (ctx) => {
     ctx.translate(-30, -40)
     brickWall(ctx, 460)
     poster(ctx, 150, 250, 1, -0.05)

@@ -24,7 +24,7 @@ function reveal(ctx, t, t0, x, y, w, h, draw) {
 }
 
 // Warm café interior sized to a w x h box; the floor starts at `floor`.
-function cafe(ctx, w, h, floor) {
+function cafe(ctx, w, h, floor, lamps = true) {
   wash(ctx, -10, -10, w + 20, h + 20, '#ead3b4', 701)
   // shelf of jars on the left wall
   wash(ctx, 10, floor - 200, 130, 12, '#9a6b48', 702)
@@ -35,10 +35,11 @@ function cafe(ctx, w, h, floor) {
   blob(ctx, w * 0.36 + 60, floor - 130, 40, 44, C.leaf, 713, 0.7)
   wash(ctx, w * 0.36 + 120, floor - 250, 100, 26, C.arun, 714, 0.5)
   // hanging lamps
-  for (const [x, sd] of [[w * 0.2, 715], [w * 0.78, 716]]) {
-    line(ctx, x, -5, x, floor - 330, C.ink, 2, sd)
-    blob(ctx, x, floor - 320, 24, 14, C.mira, sd)
-    blob(ctx, x, floor - 300, 44, 26, '#fff3c4', sd + 10, 0.35)
+  const ly = floor - 320
+  for (const [x, sd] of lamps ? [[w * 0.2, 715], [w * 0.78, 716]] : []) {
+    line(ctx, x, -5, x, ly - 10, C.ink, 2, sd)
+    blob(ctx, x, ly, 24, 14, C.mira, sd)
+    blob(ctx, x, ly + 20, 44, 26, '#fff3c4', sd + 10, 0.35)
   }
   wash(ctx, -10, floor, w + 20, h - floor + 10, '#b98c64', 717)
   for (let i = 0; i < 4; i++) line(ctx, -10, floor + 30 + i * 34, w + 10, floor + 26 + i * 34, 'rgba(90,60,40,0.25)', 2, 718 + i)
@@ -118,7 +119,7 @@ function papers(ctx, w, h) {
 
 const talk = bubblePuzzle({
   scene(ctx, t) {
-    cafe(ctx, W, H, 660)
+    cafe(ctx, W, H, 660, false)
     table(ctx, W / 2, 840)
     ctx.save()
     ctx.globalAlpha = 0.95

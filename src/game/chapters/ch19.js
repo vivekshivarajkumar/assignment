@@ -277,13 +277,22 @@ const painting = (api) => {
     return wet.c
   }
 
+  // Lays the wet stroke onto g: partly covering, partly glazing (multiply), so
+  // layers deepen like watercolour without every overlap turning to mud.
+  const lay = (g, x, y) => {
+    const img = wetStroke()
+    g.save()
+    g.globalAlpha = 0.65
+    g.drawImage(img, x, y, BOARD.w, BOARD.h)
+    g.globalCompositeOperation = 'multiply'
+    g.globalAlpha = 0.35
+    g.drawImage(img, x, y, BOARD.w, BOARD.h)
+    g.restore()
+  }
+
   const commit = () => {
     if (!stroke) return
-    art.g.save()
-    art.g.globalCompositeOperation = 'multiply'
-    art.g.globalAlpha = 0.85
-    art.g.drawImage(wetStroke(), 0, 0, BOARD.w, BOARD.h)
-    art.g.restore()
+    lay(art.g, 0, 0)
     clear(A)
     clear(B)
     stroke = null
@@ -317,13 +326,7 @@ const painting = (api) => {
       ctx.fillStyle = 'rgba(60,40,30,0.2)'
       ctx.fillRect(BOARD.x + 7, BOARD.y + 8, BOARD.w, BOARD.h)
       ctx.drawImage(art.c, BOARD.x, BOARD.y, BOARD.w, BOARD.h)
-      if (stroke) {
-        ctx.save()
-        ctx.globalCompositeOperation = 'multiply'
-        ctx.globalAlpha = 0.85
-        ctx.drawImage(wetStroke(), BOARD.x, BOARD.y, BOARD.w, BOARD.h)
-        ctx.restore()
-      }
+      if (stroke) lay(ctx, BOARD.x, BOARD.y)
       ctx.strokeStyle = 'rgba(47,43,51,0.45)'
       ctx.lineWidth = 2
       ctx.strokeRect(BOARD.x, BOARD.y, BOARD.w, BOARD.h)
@@ -652,7 +655,7 @@ const letter = (api) => {
       }
 
       if (stampedAt === null) {
-        text(ctx, 'drag the stamp onto the letter', W / 2, 60, { size: 30, color: C.ink })
+        text(ctx, 'drag the stamp onto the letter', W / 2 + 24, 60, { size: 30, color: C.ink })
         if (!drag) tapHint(ctx, stamp.x, stamp.y - 80, t)
       } else if (doneAt === null && t - stampedAt > 2.4) doneAt = t
       if (doneAt !== null) {

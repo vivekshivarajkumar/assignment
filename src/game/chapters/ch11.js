@@ -69,7 +69,7 @@ function brush(ctx, x, y, tip, angle = -0.8) {
 }
 
 const party = vignette((ctx, t) => {
-  panel(ctx, 30, 100, 480, 420, (ctx, w, h) => {
+  panel(ctx, 30, 100, 480, 420, (ctx) => {
     ctx.translate(-30, -40)
     livingRoom(ctx)
     plant(ctx, 470, 470, 1.2, C.leaf, 1104)

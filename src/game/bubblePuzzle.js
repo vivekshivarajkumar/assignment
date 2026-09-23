@@ -160,7 +160,8 @@ export function bubblePuzzle({ bubbles, scene, caption: captionText }) {
           const age = arr.length - k
           ctx.save()
           ctx.globalAlpha = 1 - (age - 1) * 0.25
-          const x = b.speaker === 'arun' ? W - 30 - BW * s : 30
+          // keep clear of the home button in the top-left corner
+          const x = b.speaker === 'arun' ? W - 30 - BW * s : 96
           ctx.translate(x, 30 + k * 76)
           ctx.scale(s, s)
           const sp = SPEAKER[b.speaker]

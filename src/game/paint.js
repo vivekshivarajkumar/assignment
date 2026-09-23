@@ -112,10 +112,11 @@ function rectPoints(x, y, w, h, r, jitter) {
 // Watercolour rectangle: three translucent layers with hand-made edges.
 export function wash(ctx, x, y, w, h, color, seed = 1, alpha = 1) {
   const r = rng(seed)
+  const base = ctx.globalAlpha
   ctx.save()
   ctx.fillStyle = color
   for (let layer = 0; layer < 3; layer++) {
-    ctx.globalAlpha = alpha * (layer === 0 ? 0.55 : 0.3)
+    ctx.globalAlpha = base * alpha * (layer === 0 ? 0.55 : 0.3)
     wobblyPath(ctx, rectPoints(x, y, w, h, r, 7 + layer * 3))
     ctx.fill()
   }
@@ -125,6 +126,7 @@ export function wash(ctx, x, y, w, h, color, seed = 1, alpha = 1) {
 // Watercolour blob (circle/ellipse).
 export function blob(ctx, x, y, rx, ry, color, seed = 1, alpha = 1) {
   const r = rng(seed)
+  const base = ctx.globalAlpha
   ctx.save()
   ctx.fillStyle = color
   for (let layer = 0; layer < 3; layer++) {
@@ -135,7 +137,7 @@ export function blob(ctx, x, y, rx, ry, color, seed = 1, alpha = 1) {
       const k = 1 + (r() - 0.5) * 0.14
       pts.push([x + Math.cos(a) * rx * k, y + Math.sin(a) * ry * k])
     }
-    ctx.globalAlpha = alpha * (layer === 0 ? 0.6 : 0.3)
+    ctx.globalAlpha = base * alpha * (layer === 0 ? 0.6 : 0.3)
     wobblyPath(ctx, pts)
     ctx.fill()
   }
@@ -209,7 +211,7 @@ function wrap(ctx, str, maxWidth) {
 export function caption(ctx, str, alpha = 1, y = H - 90) {
   if (!str) return
   ctx.save()
-  ctx.globalAlpha = alpha
+  ctx.globalAlpha *= alpha
   wash(ctx, 30, y - 50, W - 60, 100, C.cream, 99)
   text(ctx, str, W / 2, y, { size: 28, maxWidth: W - 110 })
   ctx.restore()

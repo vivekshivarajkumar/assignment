@@ -2,7 +2,7 @@
 // about groceries at all. The colour has started to leave again.
 import { vignette } from '../engine.js'
 import {
-  W, C, wash, blob, line, panel, label, phone, mira, arun, rng, mix, easeOut,
+  W, C, wash, blob, line, panel, label, phone, note, mira, arun, rng, mix, easeOut,
 } from '../paint.js'
 import { bubblePuzzle, icons } from '../bubblePuzzle.js'
 
@@ -59,13 +59,13 @@ function buzz(ctx, x, y, t, rad) {
 
 const shopping = vignette((ctx, t) => {
   panel(ctx, 30, 100, 480, 420, (ctx) => {
-    ctx.translate(-30, -150)
+    ctx.translate(-30, -270)
     aisle(ctx, 720)
     mira(ctx, 150, 760, { grey: GREY, eyes: 'open' })
     basket(ctx, 190, 612)
     arun(ctx, 380, 760, { grey: GREY, pose: 'hug', facing: -1, eyes: 'down' })
-    phone(ctx, 312, 496, 30, 50, '#d9e6ea')
-    buzz(ctx, 327, 520, t, 34)
+    phone(ctx, 306, 520, 30, 50, '#d9e6ea')
+    buzz(ctx, 321, 545, t, 34)
   })
   panel(ctx, 30, 560, 480, 230, (ctx, w, h) => {
     wash(ctx, 0, 0, w, h, G('#e4e0d6'), 1350)
@@ -74,10 +74,20 @@ const shopping = vignette((ctx, t) => {
     ctx.translate(w / 2 + shake, 20)
     blob(ctx, -70, 150, 40, 60, C.skin2, 1351)
     phone(ctx, -60, 0, 120, 200, '#d9e6ea')
-    blob(ctx, 0, 70, 36, 30, G(C.arun), 1352)
-    ctx.fillStyle = C.cream
-    ctx.fillRect(-40, 118, 80, 8)
-    ctx.fillRect(-28, 134, 56, 6)
+    // the screen: a plane and a string of notes. Another city.
+    ctx.fillStyle = G(C.arun)
+    ctx.beginPath()
+    ctx.ellipse(0, 70, 34, 7, -0.3, 0, Math.PI * 2)
+    ctx.moveTo(-6, 70)
+    ctx.lineTo(-22, 42)
+    ctx.lineTo(-10, 44)
+    ctx.lineTo(12, 66)
+    ctx.moveTo(0, 72)
+    ctx.lineTo(-4, 100)
+    ctx.lineTo(8, 96)
+    ctx.lineTo(14, 74)
+    ctx.fill()
+    for (let k = 0; k < 3; k++) note(ctx, -30 + k * 26, 150 - (k % 2) * 8, 0.6, G(C.arun))
     blob(ctx, 46, 20, 14, 14, '#d9534f', 1353)
     blob(ctx, 70, 150, 40, 58, C.skin2, 1354)
     ctx.restore()
@@ -130,8 +140,8 @@ const walkHome = vignette((ctx, t) => {
     line(ctx, px, 60, px, 330, C.ink, 5, 3)
     blob(ctx, px, 56, 12, 8, G('#f2d58a'), 1371)
     mira(ctx, 120, 380, { s: 0.85, pose: 'walk', t, grey: GREY, eyes: 'down' })
-    bag(ctx, 165, 300, 0.8, 1372)
-    bag(ctx, 300, 300, 0.8, 1376)
+    bag(ctx, 156, 296, 0.8, 1372)
+    bag(ctx, 312, 296, 0.8, 1376)
     arun(ctx, 345, 380, { s: 0.85, pose: 'walk', t: t + 0.9, grey: GREY, eyes: 'down' })
   })
   panel(ctx, 30, 540, 480, 250, (ctx, w, h) => {

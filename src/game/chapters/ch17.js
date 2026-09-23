@@ -164,7 +164,7 @@ const remember = (api) => {
     { id: 'gig', x: 80, y: 250, r: 60 }, // the empty hook
     { id: 'summer', x: 200, y: 200, r: 55 }, // the photo, or where it hung
     { id: 'visit', x: 380, y: 400, r: 45 }, // the plant, or the ring it left
-    { id: 'cafe', x: 470, y: 590, r: 50 }, // her mug
+    { id: 'cafe', x: 225, y: 460, r: 50 }, // her mug
   ].map((s) => ({ ...s, seen: false }))
   const BED = { x: 190, y: 810, r: 90 }
   const NEEDED = 4
@@ -197,15 +197,23 @@ const remember = (api) => {
       line(ctx, 70, 160, 90, 160, C.ink, 5, 1780)
       blob(ctx, 80, 250, 34, 70, '#e6dccb', 1781, 0.6)
       wash(ctx, 0, 690, W, 270, g('#8a6d55'), 1782)
-      // bed, and the dark gap under it
-      wash(ctx, 40, 720, 330, 60, g(C.sky, 0.6), 1783)
-      wash(ctx, 30, 690, 80, 50, C.cream, 1784)
+      // chest of drawers: a lamp, her books, her mug
+      wash(ctx, 70, 486, 200, 200, g('#9a7a5a'), 1787)
+      for (let i = 0; i < 3; i++) line(ctx, 84, 550 + i * 50, 256, 550 + i * 50, g('#5c3c2a'), 3, 1791 + i)
+      for (let i = 0; i < 3; i++) blob(ctx, 170, 522 + i * 50, 6, 5, C.ink, 1794 + i)
+      line(ctx, 110, 486, 110, 420, g('#5c3c2a'), 4, 1797)
+      wash(ctx, 88, 392, 44, 34, g(C.mira, 0.6), 1798)
+      wash(ctx, 145, 446, 16, 40, g(C.sky), 1799)
+      wash(ctx, 163, 452, 16, 34, g(C.rose), 1800)
+      wash(ctx, 211, 452, 28, 34, g(C.mira), 1789)
+      blob(ctx, 300, 890, 200, 40, g(C.plum, 0.6), 1788, 0.5)
+      // bed on short legs, and the dark gap under it
       wash(ctx, 40, 780, 330, 60, '#4a4550', 1785, 0.8)
-      wash(ctx, 20, 640, 22, 210, g('#7b5238'), 1786)
-      // side table and her mug
-      wash(ctx, 420, 600, 100, 14, g('#7b5238'), 1787)
-      line(ctx, 470, 610, 470, 720, g('#5c3c2a'), 7, 1788)
-      wash(ctx, 456, 564, 28, 34, g(C.mira), 1789)
+      wash(ctx, 40, 730, 330, 56, g(C.sky, 0.6), 1783)
+      wash(ctx, 30, 700, 80, 46, C.cream, 1784)
+      wash(ctx, 36, 776, 338, 14, g('#7b5238'), 1786)
+      wash(ctx, 20, 650, 22, 210, g('#7b5238'), 1801)
+      line(ctx, 365, 786, 365, 850, g('#5c3c2a'), 10, 1802)
       mira(ctx, 440, 930, { s: 0.7, grey: GREY, eyes: open ? 'closed' : 'down' })
 
       // a memory, briefly in colour

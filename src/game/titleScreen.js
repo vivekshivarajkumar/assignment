@@ -1,5 +1,6 @@
 import { W, FONT, paper, rng, easeOut } from './paint.js'
 import { pop } from './sound.js'
+import tokens from '../../tokens.json'
 
 
 // ---------- portrait ----------
@@ -298,6 +299,10 @@ export default function titleScreen(hasSave) {
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText('mira', W / 2, 135)
+        // how much Claude it took to build this game (tokens.json)
+        ctx.globalAlpha = a * 0.8
+        ctx.font = `24px ${FONT}`
+        ctx.fillText(`built with Claude · ${tokens.total.tokens.toLocaleString('en-US')} tokens`, W / 2, 232)
         ctx.restore()
         for (const row of rows) {
           const isBig = row.key === big

@@ -5,6 +5,7 @@ import splash from './game/splash.js'
 import { CHAPTERS, ACTS } from './game/chapters/index.js'
 import titleScreen from './game/titleScreen.js'
 import { isMuted, setMuted } from './game/sound.js'
+import tokens from '../tokens.json'
 
 const SAVE_KEY = 'mira-progress'
 
@@ -156,6 +157,16 @@ export default function App() {
               There are no words in the conversations, only pictures.
             </p>
             <p className="small">Everything you see is painted live in code on an HTML canvas.</p>
+            <h2>built with Claude</h2>
+            <ul className="tokens">
+              <li>input: {tokens.total.input_tokens.toLocaleString('en-US')}</li>
+              <li>output: {tokens.total.output_tokens.toLocaleString('en-US')}</li>
+              <li>cache write: {tokens.total.cache_write_tokens.toLocaleString('en-US')}</li>
+              <li>cache read: {tokens.total.cache_read_tokens.toLocaleString('en-US')}</li>
+              <li>
+                <strong>total: {tokens.total.tokens.toLocaleString('en-US')} tokens</strong>
+              </li>
+            </ul>
           </div>
         )}
         {screen === 'settings' && (

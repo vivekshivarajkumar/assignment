@@ -37,6 +37,21 @@ const ROUNDS = [
 ]
 const PAIRS = ROUNDS.length * 4
 
+// Smooth ink stroke through points (curves through midpoints, no corners).
+function curve(ctx, pts, width = 6) {
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = width
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(pts[0][0], pts[0][1])
+  for (let i = 1; i < pts.length - 1; i++) {
+    ctx.quadraticCurveTo(pts[i][0], pts[i][1], (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2)
+  }
+  ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1])
+  ctx.stroke()
+}
+
 // Square-cornered box, filled and inked.
 function box(ctx, x1, y1, x2, y2, fill, width = 6) {
   ctx.fillStyle = fill
@@ -154,56 +169,112 @@ function office(ctx) {
   ctx.stroke()
 }
 
-// Mira from behind, typing, in her office chair.
+// Mira from behind, typing, in her office chair. Traced over a fine grid.
+// crown, right side by her face, ragged ends (generated below), left side
+const HAIR_TOP = [
+  [150, 452], [170, 420], [200, 400], [240, 388], [280, 381], [320, 379], [360, 384],
+  [395, 396], [422, 416], [442, 445], [456, 480], [462, 515], [456, 540], [440, 540],
+  [420, 530], [405, 545], [398, 600], [396, 660], [392, 700],
+]
+const HAIR_LEFT = [[140, 700], [124, 660], [116, 600], [120, 530], [132, 480]]
+const HAIR = (() => {
+  // strand tips along the bottom, uneven, from right to left
+  const r = rng(421)
+  const tips = []
+  for (let x = 388; x > 146; x -= 9 + r() * 12) {
+    tips.push([x, 712 + r() * 18, 's'])
+    tips.push([x - 4, 704 + r() * 6])
+  }
+  return [...HAIR_TOP, ...tips, ...HAIR_LEFT]
+})()
+const FACE = [[396, 535], [440, 540], [434, 560], [430, 585], [436, 605], [446, 622], [434, 636], [430, 652], [410, 690], [392, 702]]
+const BACK = [
+  [40, 780], [63, 785], [109, 750], [163, 736], [230, 730], [300, 735], [348, 746],
+  [386, 769], [405, 792], [417, 823], [425, 900], [428, 992], [432, 1062], [436, 1108],
+  [371, 1140], [330, 1150], [294, 1162], [86, 1162], [82, 854],
+]
+// forearm, cuff and hand in one shape: from the elbow, over the knuckles, to
+// fingertips resting on the keys
+const HAND = [
+  [371, 1140], [436, 1108], [434, 1012], [470, 1014], [500, 1026], [522, 1044], [560, 1040],
+  [600, 1046], [630, 1058], [655, 1072], [662, 1088], [644, 1098], [600, 1104], [540, 1112],
+  [480, 1120],
+]
+
 function mira(ctx, t) {
   // her seat and the chair's column below the bar
-  shape(ctx, [[290, 1236], [420, 1232], [520, 1240], [556, 1270], [566, 1330], [566, 1380], [290, 1380]], O.seat)
+  shape(ctx, [[100, 1190], [300, 1176], [470, 1180], [530, 1210], [556, 1260], [566, 1330], [566, 1380], [100, 1380]], O.seat)
   box(ctx, 90, 1150, 180, 1380, O.chair, 6)
   for (let y = 1170; y < 1370; y += 16) ink(ctx, [[96, y], [174, y + 4]], 4, '#5a5a5a')
   box(ctx, 80, 1348, 480, 1380, O.blue, 6)
 
-  // white shirt: her back and the arm reaching to the keyboard
-  shape(ctx, [[70, 1180], [80, 880], [110, 780], [180, 735], [300, 722], [390, 760], [420, 880], [430, 1000], [420, 1180]], O.shirt)
-  for (const s of [[[170, 820], [168, 880]], [[230, 820], [226, 900]], [[300, 900], [320, 960], [340, 1040]], [[260, 790], [300, 800]]]) ink(ctx, s, 5)
-  const type = Math.sin(t * 14) * 3
-  shape(ctx, [[400, 770], [430, 900], [440, 1060], [460, 1110], [530, 1118], [540, 1060], [480, 1020], [460, 900], [420, 780]], O.shirt)
-  ink(ctx, [[500, 1070], [510, 1110]], 5) // cuff
-  // hand on the keyboard: back of the hand, fingers curling down onto the keys
-  shape(ctx, [[528, 1046], [556, 1024], [600, 1022], [632, 1034], [650, 1062], [640, 1096], [596, 1110], [548, 1112], [526, 1094]], O.shirt)
-  for (const [i, x] of [578, 602, 626].entries()) {
-    const k = i === 1 ? type : 0
-    ink(ctx, [[x - 6, 1066], [x + 4, 1084 + k], [x + 2, 1104 + k]], 4.5)
-  }
-  ink(ctx, [[560, 1040], [590, 1036], [620, 1042]], 3.5) // knuckles
-  ink(ctx, [[530, 1060], [520, 1030], [536, 1010]], 5) // thumb resting on the desk edge
+  // her back and right arm in a white shirt
+  shape(ctx, BACK, O.shirt, null)
+  curve(ctx, [[40, 780], [63, 785], [109, 750], [163, 736]], 6) // shoulders
+  curve(ctx, [[300, 735], [348, 746], [386, 769], [405, 792], [417, 823], [425, 900], [428, 992], [432, 1062], [436, 1100]], 7)
+  ink(ctx, [[63, 785], [82, 854], [86, 923]], 6) // her left side
+  curve(ctx, [[317, 815], [309, 931], [317, 1008], [332, 1085], [355, 1131]], 6) // back of the arm
+  for (const s of [
+    [[217, 785], [211, 830], [205, 869]], [[178, 815], [176, 845], [175, 869]],
+    [[271, 900], [279, 915], [286, 931]], [[363, 892], [370, 940], [378, 985]], [[348, 954], [360, 978], [371, 1000]],
+  ]) ink(ctx, s, 5)
 
-  // a sliver of her face turned to the screen, then her bob
-  shape(ctx, [[400, 470], [448, 478], [454, 525], [458, 560], [450, 585], [448, 612], [438, 645], [400, 660]], O.shirt, null)
-  ink(ctx, [[446, 480], [452, 530], [460, 560], [450, 582], [448, 612], [436, 648]], 5)
-  ink(ctx, [[416, 564], [418, 586]], 6) // eye
-  shape(ctx, [
-    [140, 560], [150, 470], [200, 395], [290, 372], [380, 384], [430, 425], [452, 470],
-    [420, 478], [408, 520], [404, 600], [406, 660], [412, 722], [360, 727], [260, 731],
-    [160, 725], [138, 650],
-  ], O.hair, null)
-  // ragged ends and strands
-  for (let i = 0; i < 13; i++) {
-    const x = 150 + i * 20
-    ink(ctx, [[x, 650 + (i % 3) * 8], [x + 1, 700 + (i % 2) * 14]], 3.5)
+  // forearm reaching to the keyboard, cuff, and the hand on the keys
+  const type = Math.sin(t * 14) * 2.5
+  shape(ctx, HAND, O.shirt, null)
+  curve(ctx, [[340, 1142], [371, 1140], [440, 1128], [540, 1112], [600, 1104], [644, 1098], [662, 1088], [655, 1072], [630, 1058], [600, 1046], [560, 1040]], 7)
+  ink(ctx, [[434, 1012], [470, 1014], [500, 1026], [522, 1044]], 6)
+  ink(ctx, [[498, 1070], [502, 1108]], 5) // cuff
+  ink(ctx, [[448, 1026], [462, 1034], [468, 1050]], 5) // knuckles
+  ink(ctx, [[474, 1030], [490, 1038], [496, 1054]], 5)
+  // fingers bent down onto the keys, one of them tapping
+  for (const [i, [x, y]] of [[572, 1060], [600, 1066], [628, 1074]].entries()) {
+    ctx.save()
+    ctx.translate(x, y + (i === 1 ? type : 0))
+    ctx.rotate(0.5)
+    ctx.beginPath()
+    ctx.roundRect(-10, -6, 20, 44, 10)
+    ctx.fillStyle = O.shirt
+    ctx.fill()
+    ctx.strokeStyle = K.ink
+    ctx.lineWidth = 5
+    ctx.stroke()
+    ctx.restore()
   }
-  for (const s of [[[420, 480], [408, 540], [406, 620]], [[430, 440], [412, 470]], [[250, 400], [220, 470], [205, 560]], [[330, 390], [350, 460], [360, 560]]]) ink(ctx, s, 3.5)
 
-  // chair back, dark with a blue rim
+  // a sliver of her face turned to the screen: eye, nose, chin
+  shape(ctx, FACE, O.shirt, null)
+  curve(ctx, [[442, 545], [432, 565], [430, 588], [438, 606], [447, 622], [434, 637], [430, 655], [412, 690], [396, 702]], 6)
+  ink(ctx, [[416, 568], [418, 590]], 7)
+
+  // her bob: rounded crown, straight sides, ragged ends
+  shape(ctx, HAIR, O.hair, null)
+  curve(ctx, [[140, 700], [124, 660], [116, 600], [120, 530], [132, 480], [150, 452], [170, 420], [200, 400], [240, 388], [280, 381], [320, 379], [360, 384], [395, 396], [422, 416], [442, 445], [456, 480]], 7)
+  ink(ctx, [[150, 452], [132, 500], [118, 560]], 4) // a flyaway on the left
+  // strands down the back of her head, and the fringe falling past her face
+  for (const s of [
+    [[390, 460], [394, 560], [392, 660], [388, 730]], [[372, 610], [374, 670], [370, 725]],
+    [[340, 590], [345, 660], [344, 722]], [[312, 630], [316, 680], [312, 714]],
+    [[284, 600], [282, 660], [282, 716]], [[252, 640], [256, 690], [262, 720]],
+    [[226, 610], [224, 670], [228, 716]], [[196, 640], [196, 690], [192, 716]],
+    [[168, 620], [164, 670], [160, 706]], [[150, 540], [146, 610], [148, 680]],
+  ]) ink(ctx, s, 4.5)
+  for (const s of [
+    [[410, 440], [430, 490], [446, 538]], [[426, 452], [446, 500], [458, 532]],
+    [[436, 458], [454, 488], [462, 520]], [[404, 470], [414, 520], [418, 540]],
+  ]) ink(ctx, s, 4.5)
+
+  // chair back, dark with a blue rim along the top and right
   ctx.save()
-  ctx.beginPath()
-  ctx.roundRect(-20, 925, 300, 240, 26)
-  ctx.fillStyle = O.blue
-  ctx.fill()
   ctx.strokeStyle = K.ink
   ctx.lineWidth = 7
+  ctx.beginPath()
+  ctx.roundRect(-20, 922, 316, 248, 30)
+  ctx.fillStyle = O.blue
+  ctx.fill()
   ctx.stroke()
   ctx.beginPath()
-  ctx.roundRect(-20, 945, 270, 212, 20)
+  ctx.roundRect(-20, 938, 302, 232, 24)
   ctx.fillStyle = O.chair
   ctx.fill()
   ctx.stroke()

@@ -4,7 +4,7 @@
 // sheet at 0.6 scale, in the cold grey-blue of her mornings. On a phone the whole
 // sheet shows; on a shorter screen the top of the headboard is cropped.
 import { W, UI_FONT, tapHint, rng, clamp, easeOut, easeInOut } from '../paint.js'
-import { pop, tone } from '../sound.js'
+import { pop, alarmClock } from '../sound.js'
 
 const SANS = "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
 
@@ -824,19 +824,26 @@ export function border(ctx, x, top, bottom) {
 // otherwise crop the headboard so the clock panel (to row 1790) stays in view.
 export const sheetTop = (height) => Math.max(58, 1790 - height / 0.6)
 
-// 6:59 flips to 7:00 and the alarm rings. Tap it: she snoozes and rolls over,
-// the clock flips to 7:15 and rings again. Tap it again and she drifts off: the
-// camera pans past the end of the bed to a close-up of the clock, whose minutes
-// tick on to 07:28. She's late. Tap to go on.
+// 6:59 flips to 7:00 and the alarm rings. Tap it and the clock card drops out
+// of the bottom of the page and everything goes black: she has snoozed. The
+// lights come back with her rolled over, the card falls back into place, and it
+// flips to 7:15 and rings again. Tap it again and the card drops, the page goes
+// black, and she has drifted off: when the lights come back the camera pans past
+// the end of the bed to a close-up of the clock, whose minutes tick on to 07:28.
+// She's late. Tap to go on.
 const PAN = 1000 // how far the camera travels, in sheet units
 const PANEL_X = 1076 // where the close-up panel starts, in sheet units
 const LATE = 28 // the minute she finally wakes at
+const DROP = 0.55 // seconds for the card to fall out of the page
+const DARK = [0.25, 0.65, 1.35, 1.85] // after a tap: going dark, dark, coming back, back
+const RETURN = [1.55, 2.0] // after the snooze: the card falling back into place
+const CARD = [434, 1538] // the middle of the clock card, which it tilts about as it falls
 
 export default function wakeUp(api) {
   const FLIP_AT = 1.6
   let snoozedAt = null
   let stoppedAt = null
-  let lastBeep = 0
+  let alarm = alarmClock()
   const toScreen = (y) => (y - sheetTop(api.height())) * 0.6
   const inClock = (y) => y > toScreen(1312) && y < toScreen(1764)
   // what the clock and Mira are doing at time t
@@ -845,18 +852,42 @@ export default function wakeUp(api) {
     if (snoozedAt === null) {
       return { digits: first < 0.5 ? ' 659' : ' 700', flip: first, changing: [1, 2, 3], ringing: first >= 1, awakeK: 0 }
     }
-    const second = clamp((t - snoozedAt - 1.1) / 0.35, 0, 1)
+    // she rolls over in the dark; the second flip waits for the card to land
+    const second = clamp((t - snoozedAt - RETURN[1] - 0.35) / 0.35, 0, 1)
     return {
       digits: second < 0.5 ? ' 700' : ' 715',
       flip: second,
       changing: [2, 3],
       ringing: second >= 1 && stoppedAt === null,
-      awakeK: easeOut((t - snoozedAt - 0.3) / 0.7),
+      awakeK: easeOut((t - snoozedAt - 0.7) / 0.5),
     }
   }
-  // the pan and the minutes ticking on in the close-up
-  const panAt = (t) => (stoppedAt === null ? 0 : easeInOut((t - stoppedAt - 0.5) / 1.4) * PAN)
-  const countStart = () => stoppedAt + 2.2
+  // where the clock card is: [drop, tilt] in sheet units, or null once it's gone
+  const card = (t) => {
+    const tapped = stoppedAt ?? snoozedAt
+    if (tapped === null) return [0, 0]
+    const s = t - tapped
+    if (s < DROP) {
+      // falling faster and faster, tipping as it goes
+      const k = s / DROP
+      return [1500 * k * k, 0.12 * k * k]
+    }
+    if (stoppedAt !== null) return null
+    const k = easeOut((s - RETURN[0]) / (RETURN[1] - RETURN[0]))
+    return k > 0 ? [-1500 * (1 - k), 0] : null
+  }
+  // how black the page is, after the last tap
+  const dark = (t) => {
+    const tapped = stoppedAt ?? snoozedAt
+    if (tapped === null) return 0
+    const s = t - tapped
+    if (s < DARK[1]) return clamp((s - DARK[0]) / (DARK[1] - DARK[0]), 0, 1)
+    if (s < DARK[2]) return 1
+    return 1 - clamp((s - DARK[2]) / (DARK[3] - DARK[2]), 0, 1)
+  }
+  // the pan and the minutes ticking on in the close-up, once the lights are back
+  const panAt = (t) => (stoppedAt === null ? 0 : easeInOut((t - stoppedAt - DARK[3] - 0.25) / 1.4) * PAN)
+  const countStart = () => stoppedAt + DARK[3] + 1.95
   const TICK = 0.16
   const minuteAt = (t) => Math.min(LATE, 15 + Math.max(0, Math.floor((t - countStart()) / TICK)))
   const countDone = (t) => stoppedAt !== null && t > countStart() + (LATE - 15) * TICK + 0.4
@@ -869,17 +900,21 @@ export default function wakeUp(api) {
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, W, api.height())
       const st = state(t)
-      if (st.ringing && t - lastBeep > 0.45) {
-        lastBeep = t
-        tone(1320, 0.14, { type: 'square', gain: 0.03 })
-      }
+      if (st.ringing) alarm.ring()
       const pan = panAt(t)
-      const clockAlpha = easeOut((t - 0.5) / 0.6) * (stoppedAt === null ? 1 : 1 - easeOut((t - stoppedAt) / 0.35))
       ctx.save()
       ctx.scale(0.6, 0.6)
       ctx.translate(-pan, -sheetTop(api.height()))
       bedScene(ctx, t, st.ringing, st.awakeK)
-      if (clockAlpha > 0) clockPanel(ctx, clockAlpha, st.digits, st.flip, st.ringing, t, st.changing)
+      const at = card(t)
+      if (at) {
+        ctx.save()
+        ctx.translate(CARD[0], CARD[1] + at[0])
+        ctx.rotate(at[1])
+        ctx.translate(-CARD[0], -CARD[1])
+        clockPanel(ctx, easeOut((t - 0.5) / 0.6), st.digits, st.flip, st.ringing, t, st.changing)
+        ctx.restore()
+      }
       nameLabel(ctx, easeOut((t - 0.9) / 0.6))
       if (stoppedAt !== null) {
         // the close-up panel to the right of the bedroom
@@ -895,7 +930,12 @@ export default function wakeUp(api) {
         bigDisplay(ctx, `07${String(m).padStart(2, '0')}`, ticking ? 3 : -1, ticking ? tick % 1 : 0)
       }
       ctx.restore()
-      const ringSince = snoozedAt === null ? FLIP_AT : snoozedAt + 1.45
+      const black = dark(t)
+      if (black > 0) {
+        ctx.fillStyle = `rgba(0,0,0,${black})`
+        ctx.fillRect(0, 0, W, api.height())
+      }
+      const ringSince = snoozedAt === null ? FLIP_AT : snoozedAt + RETURN[1] + 0.7
       if (st.ringing && t > ringSince + 2.5) tapHint(ctx, W / 2, toScreen(1400), t, K.ink)
       if (countDone(t)) tapHint(ctx, 50, 50, t)
     },
@@ -905,6 +945,8 @@ export default function wakeUp(api) {
         return
       }
       if (!inClock(y) || !state(t).ringing) return
+      alarm.stop()
+      alarm = alarmClock()
       pop(300)
       if (snoozedAt === null) snoozedAt = t
       else stoppedAt = t

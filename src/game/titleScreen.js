@@ -1,5 +1,5 @@
 import { W, H, UI_FONT, rng, easeOut } from './paint.js'
-import { pop } from './sound.js'
+import { pop, pageTurn } from './sound.js'
 import tokens from '../../tokens.json'
 
 
@@ -328,7 +328,9 @@ export default function titleScreen(hasSave) {
         const row = rows.find((r) => Math.abs(y - r.y - dy()) < 28)
         if (!row) return
         picked = row.key
-        pop(660)
+        // the menu pages turn like paper; starting the story is a plain tap
+        if (['about', 'settings', 'chapters'].includes(row.key)) pageTurn()
+        else pop(660)
         api.finish(row.key)
       },
     }

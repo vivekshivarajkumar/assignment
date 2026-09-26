@@ -11,7 +11,7 @@
 # of their own. Paths are in half reference pixels; the page draws them at 0.375.
 import cv2, numpy as np, sys, json
 REF, OUT, PREVIEW = sys.argv[1:4]
-K = 12
+K = int(sys.argv[4]) if len(sys.argv) > 4 else 16
 TOP = 77
 UP = 2
 
@@ -88,7 +88,28 @@ if holes.any():
     lut[idx[ys, xs]] = clean[ys, xs]
     clean[holes] = lut[idx[holes]]
 labels = clean
+# each layer's colour is the median of the reference's own clean pixels inside
+# it, not the cluster centre, which was found on a blurred copy and rounded
+# through 8-bit Lab
 bgr = cv2.cvtColor(centers.reshape(1, K, 3).astype(np.uint8), cv2.COLOR_LAB2BGR)[0]
+for k in range(K):
+    core = cv2.erode((labels == k).astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
+    sel = core & pure & ~ink
+    if sel.sum() > 200:
+        bgr[k] = np.median(ref[sel], 0)
+# clusters closer than a just-noticeable difference are one colour: merge them,
+# so spare clusters only survive where the reference really has distinct tones
+def labof(c):
+    return cv2.cvtColor(np.uint8([[c]]), cv2.COLOR_BGR2LAB)[0, 0].astype(float) * [100 / 255, 1, 1]
+while True:
+    alive = [k for k in range(K) if (labels == k).any()]
+    pairs = [(np.linalg.norm(labof(bgr[a]) - labof(bgr[b])), a, b) for i, a in enumerate(alive) for b in alive[i + 1:]]
+    d, a, b = min(pairs)
+    if d >= 3.0:
+        break
+    labels[labels == b] = a
+    sel = (labels == a) & pure & ~ink
+    bgr[a] = np.median(ref[sel], 0) if sel.sum() > 200 else bgr[a]
 bgr = np.where((bgr > 244).all(1, keepdims=True), 255, bgr).astype(np.uint8)
 hexes = ['#%02x%02x%02x' % (int(c[2]), int(c[1]), int(c[0])) for c in bgr]
 
@@ -114,14 +135,27 @@ def path_soft(soft, eps, min_area):
 
 counts = np.bincount(labels.ravel(), minlength=K)
 order = np.argsort(-counts)
-layers = [[hexes[k], path_soft((labels == k).astype(np.float32), 0.6, 30)] for k in order]
-inkd = path_soft(ink_soft, 0.45, 5)
-core = ink & (gray < 30)
-inkcol = np.median(ref[core], 0)
-inkhex = '#%02x%02x%02x' % (int(inkcol[2]), int(inkcol[1]), int(inkcol[0]))
-json.dump({'layers': layers, 'ink': inkd, 'inkColor': inkhex}, open(OUT, 'w'))
+# each layer overlaps its neighbours by half a pixel, so no paper shows through
+# the anti-aliased seam where two colours meet (drawn in order, the later layer
+# wins the overlap)
+grow = lambda m: cv2.dilate(m.astype(np.uint8), np.ones((2, 2), np.uint8)).astype(np.float32)
+layers = [[hexes[k], path_soft(grow(labels == k), 0.6, 30)] for k in order if counts[k]]
+# two inks: the black pen, and a dark grey brush for hatching. A stroke whose
+# darkest point never reaches black is brush; the black pen's anti-aliased
+# rims are not, because their neighbourhood includes the black core
+darkest = cv2.erode(gray, np.ones((5, 5), np.uint8))
+brush = ink & (darkest > 38)
+pen_soft = np.where(brush, 0, ink_soft)
+brush_soft = np.where(brush, ink_soft, 0)
+inkd = path_soft(pen_soft, 0.45, 5)
+brushd = path_soft(brush_soft, 0.45, 4)
+hexof = lambda c: '#%02x%02x%02x' % (int(c[2]), int(c[1]), int(c[0]))
+inkhex = hexof(np.median(ref[ink & (gray < 30)], 0))
+brushhex = hexof(np.median(ref[brush & (gray < np.percentile(gray[brush], 50))], 0)) if brush.any() else inkhex
+json.dump({'layers': layers, 'brush': [brushhex, brushd], 'ink': inkd, 'inkColor': inkhex}, open(OUT, 'w'))
 prev = bgr[labels].copy()
-prev[ink] = (20, 20, 20)
+prev[ink & ~brush] = (3, 3, 3)
+prev[brush] = ref[brush]
 cv2.imwrite(PREVIEW, prev)
 print('palette:', ' '.join(hexes[k] + ':%d%%' % (100 * counts[k] // labels.size) for k in order))
-print('ink', inkhex, '| bytes: layers %d, ink %d' % (sum(len(d) for _, d in layers), len(inkd)))
+print('ink', inkhex, 'brush', brushhex, 'brush px %d' % brush.sum(), '| bytes: layers %d, brush %d, ink %d' % (sum(len(d) for _, d in layers), len(brushd), len(inkd)))

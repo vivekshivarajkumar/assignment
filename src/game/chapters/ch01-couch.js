@@ -7,54 +7,134 @@
 import { W, tapHint, rng } from '../paint.js'
 import { pop } from '../sound.js'
 import { K, sheetTop } from './ch01-wake.js'
-import { LAYERS, INK, INK_COLOR, FLOOR, PIECES } from './ch01-couch-trace.js'
+import { LAYERS, BRUSH, INK, INK_COLOR, FLOOR, PIECES } from './ch01-couch-trace.js'
 
 const REF = 0.75 // reference pixels to sheet units
 // the inside of the bar, measured on the reference
 const BAR = { x: 186, y: 1571, w: 827, h: 65 }
 const FILL = '#6fd2fb' // the call's bar colour
+const SOFT = 0.6 // edge blur, in reference pixels, measured against the reference
 
 // Path2D objects are built the first time the page is shown.
 let art = null
 function paths() {
   art ??= {
     layers: LAYERS.map(([color, d]) => [color, new Path2D(d)]),
+    brush: new Path2D(BRUSH[1]),
     ink: new Path2D(INK),
     pieces: PIECES.map((p) => new Path2D(p.region)),
   }
   return art
 }
 
-// Colour flat, then grain, then the ink over everything. Each colour is also
-// stroked a hair wide so no paper shows between neighbours. The art is traced
-// at half-pixel steps, hence the halving.
+// Colour flat, then grain, then the brush and pen over everything. The traced
+// layers overlap their neighbours by half a pixel, so they need no seam
+// filling. The art is traced at half-pixel steps, hence the halving.
 function paint(g) {
   const a = paths()
+  const tiles = grainTiles(g)
   g.fillStyle = '#ffffff'
   g.fillRect(0, 0, 1200, 2670)
   g.save()
   g.scale(0.5, 0.5)
-  g.lineWidth = 3
+  let paper = null
   for (const [color, p] of a.layers) {
     g.fillStyle = color
-    g.strokeStyle = color
     g.fill(p, 'evenodd')
-    g.stroke(p)
+    if (color === '#ffffff') paper = p
   }
-  grain(g)
+  g.restore()
+  // grain over everything, then the white paper painted back clean: the paper
+  // carries no grain, only paint does
+  g.globalCompositeOperation = 'lighter'
+  g.fillStyle = tiles.up
+  g.fillRect(0, 0, 1200, 2670)
+  g.globalCompositeOperation = 'difference'
+  g.fillStyle = tiles.down
+  g.fillRect(0, 0, 1200, 2670)
+  g.globalCompositeOperation = 'source-over'
+  g.save()
+  g.scale(0.5, 0.5)
+  if (paper) {
+    g.fillStyle = '#ffffff'
+    g.fill(paper, 'evenodd')
+  }
+  g.fillStyle = BRUSH[0]
+  g.fill(a.brush, 'evenodd')
   g.fillStyle = INK_COLOR
   g.fill(a.ink, 'evenodd')
   g.restore()
 }
 
-// The printed grain of the page: specks a shade darker and lighter than the
-// paint, too fine to see one at a time.
-function grain(g) {
+// The print texture: grey grain a couple of pixels across, the same strength
+// on every tone, matched to the reference at each scale once the page has been
+// softened (see SOFT). It is split into the part that lightens, added with
+// 'lighter', and the part that darkens, taken off with 'difference', which is
+// an exact subtraction wherever the paint is brighter than the grain: all of it.
+const GRAIN = 2.4
+function grainTiles(g) {
+  const N = 256
   const r = rng(11)
-  g.fillStyle = 'rgba(30,40,50,0.07)'
-  for (let i = 0; i < 9000; i++) g.fillRect(r() * 2400, 154 + r() * 5186, 2 + r() * 3, 2 + r() * 2)
-  g.fillStyle = 'rgba(255,255,255,0.08)'
-  for (let i = 0; i < 6000; i++) g.fillRect(r() * 2400, 154 + r() * 5186, 2 + r() * 3, 2 + r() * 2)
+  const dots = new Float32Array(N * N)
+  for (let i = 0; i < dots.length; i++) dots[i] = r() + r() + r() - 1.5
+  // a wrapping 3 x 3 blur softens single-pixel dots into grain
+  const n = new Float32Array(N * N)
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      let sum = 0
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) sum += dots[((y + dy + N) % N) * N + ((x + dx + N) % N)]
+      }
+      n[y * N + x] = sum / 9
+    }
+  }
+  let sq = 0
+  for (const v of n) sq += v * v
+  const k = GRAIN / Math.sqrt(sq / n.length)
+  const tile = (sign) => {
+    const c = document.createElement('canvas')
+    c.width = c.height = N
+    const cx = c.getContext('2d')
+    const img = cx.createImageData(N, N)
+    const px = img.data
+    for (let i = 0; i < n.length; i++) {
+      const level = Math.max(0, Math.round(sign * n[i] * k))
+      px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = level
+      px[i * 4 + 3] = 255
+    }
+    cx.putImageData(img, 0, 0)
+    return g.createPattern(c, 'repeat')
+  }
+  return { up: tile(1), down: tile(-1) }
+}
+
+// A small Gaussian blur: canvas filters round radii under about a pixel down
+// to nothing, and not every browser has them. Instead, passes of the 3-tap
+// kernel [a, 1 - 2a, a] across and then down, whose variances add up to the
+// one asked for. Each pass is two copies of the picture shifted a pixel either
+// way and laid over it: at alpha a / (1 - a) and then a, those blend to
+// exactly the kernel's weights.
+function soften(c, sigma) {
+  const passes = Math.ceil((sigma * sigma) / 0.5)
+  const a = (sigma * sigma) / (2 * passes)
+  const copy = document.createElement('canvas')
+  copy.width = c.width
+  copy.height = c.height
+  const k = copy.getContext('2d')
+  const g = c.getContext('2d')
+  g.save()
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  for (let pass = 0; pass < passes; pass++) {
+    for (const [dx, dy] of [[1, 0], [0, 1]]) {
+      k.globalCompositeOperation = 'copy'
+      k.drawImage(c, 0, 0)
+      g.globalAlpha = a / (1 - a)
+      g.drawImage(copy, -dx, -dy)
+      g.globalAlpha = a
+      g.drawImage(copy, dx, dy)
+    }
+  }
+  g.restore()
 }
 
 // The same bar as the call, filling from the left with an ink edge.
@@ -100,6 +180,9 @@ export default function couchSushi(api) {
       const g = c.getContext('2d')
       g.setTransform(m)
       paint(g)
+      // every edge in the reference is a little soft, as if its art had been
+      // enlarged; the same blur here, measured against it, matches them
+      soften(c, SOFT * m.a)
       still = { key, canvas: c }
     }
     ctx.save()

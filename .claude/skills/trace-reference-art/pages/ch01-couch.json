@@ -1,0 +1,32 @@
+{
+  "page": "ch01-couch",
+  "title": "Chapter 1, page 7",
+  "out": "src/game/chapters/ch01-couch-trace.js",
+  "reference": {
+    "size": [1200, 2670],
+    "sha256": "041e4e4cb34e852b7c37881e46959e117438688c14c44969cf93dc46052b83d2",
+    "note": "phone screenshot shared in chat, after the call with Mum; not kept in the repo"
+  },
+  "trace": {
+    "status_bar": 77,
+    "colors": 16,
+    "erase": [{ "circle": [1078, 196, 62], "carry_vertical_lines": true, "what": "the reference's home button" }]
+  },
+  "regions": {
+    "what": "the sushi: six maki in two rows, two nigiri down the right; row 2 is in front of row 1",
+    "items": [
+      { "kind": "maki", "center": [302, 1962], "drum": [302, 1962, 88, 2080] },
+      { "kind": "maki", "center": [454, 1966], "drum": [454, 1966, 88, 2072] },
+      { "kind": "maki", "center": [643, 1962], "drum": [643, 1962, 86, 2076] },
+      { "kind": "maki", "center": [292, 2146], "drum": [292, 2146, 88, 2246] },
+      { "kind": "maki", "center": [465, 2132], "drum": [465, 2132, 90, 2246] },
+      { "kind": "maki", "center": [652, 2134], "drum": [652, 2134, 88, 2246] },
+      { "kind": "nigiri", "center": [842, 1990], "polygon": [[700, 2010], [760, 1930], [870, 1893], [975, 1902], [988, 1960], [950, 2030], [880, 2072], [760, 2088], [704, 2066]] },
+      { "kind": "nigiri", "center": [858, 2150], "polygon": [[728, 2172], [790, 2100], [900, 2060], [986, 2066], [988, 2142], [940, 2216], [830, 2244], [738, 2238]] }
+    ],
+    "z_order": [0, 1, 2, 6, 3, 4, 5, 7],
+    "bounds": [198, 1852, 994, 2256],
+    "well": { "rect": [218, 1868, 980, 2246], "radius": 34 },
+    "floor_sample": { "rect": [212, 1862, 985, 2252], "gray": [22, 115] }
+  }
+}

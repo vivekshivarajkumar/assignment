@@ -36,6 +36,17 @@ const ROUNDS = [
   [['我好好。', 'I’m fine.'], ['唔好幫我搵男朋友。', 'You don’t have to find a boyfriend for me.']],
   [['我要做嘢喇。', 'I need to get back to work.'], ['拜拜，媽。', 'Bye, Mum.']],
 ]
+// The replies are the only Chinese in the game, and their font is ten files
+// (about 350 KB) for these few characters. They start loading as soon as the
+// game does, in the background, and the replies are held back until they're
+// in, so they never show in a stand-in face and then change. If the font can't
+// load at all, the replies show anyway rather than never.
+const REPLY_FACE = "400 84px 'Noto Sans TC'"
+const REPLY_TEXT = ROUNDS.flat().map(([zh]) => zh).join('')
+let replyFont = false
+if (typeof document !== 'undefined' && document.fonts) {
+  document.fonts.load(REPLY_FACE, REPLY_TEXT).finally(() => (replyFont = true))
+} else replyFont = true
 const PICKED = '#70d3fa'
 const SAY = 1.0 // seconds Mira takes to say her reply
 const MUM = 1.4 // seconds Mum then talks before the next replies appear
@@ -425,7 +436,7 @@ export default function mumTalks(api) {
   // Mira says her reply, then Mum talks for a moment before the next replies
   const talkUntil = () => (pickedAt === null ? 1.4 : pickedAt + SAY + MUM)
   const saying = (t) => pickedAt !== null && t < pickedAt + SAY
-  const showing = (t) => doneAt === null && !saying(t) && t > talkUntil()
+  const showing = (t) => doneAt === null && !saying(t) && t > talkUntil() && replyFont
 
   return {
     tall: true,

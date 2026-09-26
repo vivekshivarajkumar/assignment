@@ -11,9 +11,13 @@ import '@fontsource/montserrat/latin-500.css'
 import '@fontsource/montserrat/latin-600.css'
 import './index.css'
 import App from './App.jsx'
+import { fontsLoaded } from './game/fonts.js'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+// nothing is drawn until the fonts are in, so no text ever changes face
+fontsLoaded().then(() =>
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  ),
 )

@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Stage from './game/Stage.jsx'
 import { titleCard } from './game/engine.js'
 import splash from './game/splash.js'
 import { CHAPTERS, ACTS } from './game/chapters/index.js'
 import titleScreen from './game/titleScreen.js'
-import { isMuted, setMuted } from './game/sound.js'
+import { isMuted, setMuted, startMusic, stopMusic } from './game/sound.js'
 import tokens from '../tokens.json'
 
 const SAVE_KEY = 'mira-progress'
@@ -25,6 +25,25 @@ function saveProgress(n) {
   }
 }
 
+// Every page of every chapter in order, each chapter's card first: the debug
+// list, and the ◀ ▶ that step through them.
+const ALL_PAGES = CHAPTERS.flatMap((c) => [c.title, ...c.pages].map((_, page) => ({ chapter: c.number, page })))
+
+// a page's number, and its function's name where it has one while developing
+// (a production build minifies names away)
+function pageName(chapter, page) {
+  if (page === 0) return 'card'
+  const name = CHAPTERS[chapter - 1].pages[page - 1].name
+  return import.meta.env.DEV && name ? `${page} ${name}` : String(page)
+}
+
+// the screens that make up the home menu, where the music plays
+const HOME = ['title', 'chapters', 'about', 'settings', 'debug']
+
+// ?debug opens the list of every page; with ?ch=5&p=2 it opens that page with
+// the debug bar
+const debugFromUrl = () => new URLSearchParams(location.search).has('debug')
+
 // ?ch=5&p=2 opens chapter 5 at its second page (page 0 is the chapter card)
 function startFromUrl() {
   const q = new URLSearchParams(location.search)
@@ -42,11 +61,17 @@ function HomeIcon() {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState(() => (startFromUrl() ? 'play' : 'splash'))
+  const [screen, setScreen] = useState(() => (startFromUrl() ? 'play' : debugFromUrl() ? 'debug' : 'splash'))
   const [pos, setPos] = useState(() => startFromUrl() ?? { chapter: 1, page: 0 })
   const [unlocked, setUnlocked] = useState(loadProgress)
   const [muted, setMutedState] = useState(isMuted())
   const [confirmHome, setConfirmHome] = useState(false)
+  const [debug, setDebug] = useState(debugFromUrl)
+
+  useEffect(() => {
+    if (HOME.includes(screen)) startMusic()
+    else stopMusic()
+  }, [screen])
 
   const chapter = CHAPTERS[pos.chapter - 1]
   const pages = useMemo(
@@ -84,6 +109,19 @@ export default function App() {
   const toggleSound = () => {
     setMuted(!muted)
     setMutedState(!muted)
+    if (muted) startMusic()
+  }
+
+  // open any page directly, with the debug bar
+  const openPage = (chapter, page) => {
+    setDebug(true)
+    setPos({ chapter, page })
+    setScreen('play')
+  }
+  const step = (d) => {
+    const i = ALL_PAGES.findIndex((p) => p.chapter === pos.chapter && p.page === pos.page)
+    const to = ALL_PAGES[Math.max(0, Math.min(ALL_PAGES.length - 1, i + d))]
+    setPos({ chapter: to.chapter, page: to.page })
   }
 
   const back = (
@@ -116,6 +154,7 @@ export default function App() {
                     <button
                       onClick={() => {
                         setConfirmHome(false)
+                        setDebug(false)
                         setScreen('title')
                       }}
                     >
@@ -126,7 +165,48 @@ export default function App() {
                 </div>
               </div>
             )}
+            {debug && (
+              <div className="debug-bar">
+                <button onClick={() => setScreen('debug')}>pages</button>
+                <button aria-label="Previous page" onClick={() => step(-1)}>
+                  ◀
+                </button>
+                <span>
+                  {pos.chapter} · {pageName(pos.chapter, pos.page)}
+                </span>
+                <button aria-label="Next page" onClick={() => step(1)}>
+                  ▶
+                </button>
+              </div>
+            )}
           </>
+        )}
+        {screen === 'debug' && (
+          <nav className="page">
+            {back}
+            <h1>debug</h1>
+            <p className="small">Every page of every chapter, locked or not. Opens with ◀ ▶ to step through.</p>
+            {ACTS.map((act) => (
+              <section key={act.name}>
+                <h2>{act.name}</h2>
+                <ol className="debug-pages">
+                  {CHAPTERS.filter((c) => c.act === act.name).map((c) => (
+                    <li key={c.number}>
+                      <span className="num">{c.number}</span>
+                      {c.title.toLowerCase()}
+                      <div>
+                        {[c.title, ...c.pages].map((_, page) => (
+                          <button key={page} onClick={() => openPage(c.number, page)}>
+                            {pageName(c.number, page)}
+                          </button>
+                        ))}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </nav>
         )}
         {screen === 'chapters' && (
           <nav className="page">
@@ -180,6 +260,9 @@ export default function App() {
             <h1>settings</h1>
             <button className="setting" onClick={toggleSound}>
               sound: <strong>{muted ? 'off' : 'on'}</strong>
+            </button>
+            <button className="setting" onClick={() => setScreen('debug')}>
+              debug: <strong>every page</strong>
             </button>
           </div>
         )}

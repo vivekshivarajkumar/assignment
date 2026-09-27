@@ -52,12 +52,20 @@ def trace(ref, cfg):
     h, w = ref.shape[:2]
     # where a button sits over art that doesn't run straight through it (a
     # corner), paint the art back by hand: circles and rects take the colour
-    # at a sample point, lines are pen black (samples are 7 x 7 medians)
+    # at a sample point, lines are pen black (samples are 7 x 7 medians);
+    # `tile` fills a rect by repeating rows `from` [y0, y1) down it
     ref = ref.copy()
     for s in c['paint']:
         x, y = s.get('sample', (None, None))
         col = tuple(int(v) for v in np.median(ref[y - 3:y + 4, x - 3:x + 4].reshape(-1, 3), 0)) if x else (8, 8, 8)
-        if 'circle' in s:
+        if 'tile' in s:
+            # art nobody has seen (behind a card that moves away): repeat a
+            # band of the same pattern from elsewhere down over it
+            x0, y0, x1, y1 = s['tile']
+            f0, f1 = s['from']
+            for y in range(y0, y1):
+                ref[y, x0:x1] = ref[f0 + (y - y0) % (f1 - f0), x0:x1]
+        elif 'circle' in s:
             cv2.circle(ref, tuple(s['circle'][:2]), s['circle'][2], col, -1, cv2.LINE_AA)
         elif 'rect' in s:
             cv2.rectangle(ref, tuple(s['rect'][:2]), tuple(s['rect'][2:]), col, -1)

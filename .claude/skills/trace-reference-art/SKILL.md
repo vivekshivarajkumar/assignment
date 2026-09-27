@@ -189,6 +189,9 @@ Each of these cost a round on the couch. The symptom is how you'll recognise it.
 | Stars in a night window disappear | Ink holes under `ink_min_area` are dropped | `ink_min_area` 1.5 |
 | The screenshot's button covers a corner, not a line running through | `erase` can only carry straight lines through | `paint` in the config: fill it with the wall, then draw the corner back (rects sampled from nearby, pen lines) |
 | A page that pans repaints its art every frame | The still-art cache is keyed on the whole transform | Key on everything but the sideways offset and draw the copy at it (`ch01-brush.js`) |
+| The screenshot has text the game must not show (another character's name on a label) | It's part of the image | `paint` a rect of the label's own colour over it, trace the label, and write the page's text live on it (`pages/ch01-wake.json`) |
+| Something animated in the screenshot (the wake page's clock card drops, shakes, flips) | Baked in, it can't move, and nobody has seen what's behind it | Trace it alone (`keep`, with what changes blanked, `pages/ch01-wake-card.json`), copy its painted canvas in under the moving transform, and draw only the changing part live. Fill what's behind it with `tile`: repeat real rows of the same pattern from nearby |
+| A measure moves between runs on the same code | Something in the shot animates (a shaking card) | Compare that part by eye in a crop, or read the other bands |
 | Test "passes" but the fix isn't working | A Playwright `load` wait includes fonts; cached files skip `route()`; `document.fonts.check()` says loaded while loading | Measure order from navigation, a fresh browser context, gate on `document.fonts.load()`, and a negative control |
 
 ## Budget

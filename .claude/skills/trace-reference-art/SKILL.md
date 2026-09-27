@@ -105,13 +105,30 @@ true and the page draws in CSS pixels of the whole window (`api.width()` x
 the worked example: `drawDesk`, `DESK_*`. Offscreen art canvases must be as
 wide as the art, not the window, or a narrow window cuts it off.
 
-First page laid out this way without a desktop screenshot: `ch01-brush.js`
-(fill-the-width, 975/600 of its half-size reference). Two things the pattern
-didn't cover: at fill-the-width the scene is bigger relative to the card, so
-the view has to be moved (`from`) until the bar sits where it does on the
-phone, under her chin; and the phone's own bar ring, baked into the trace, then
-shows beside the card, so a small patch trace paints it out
-(`pages/ch01-brush-desk.json`).
+Tested on the brushing page: laid out from the pattern first, then compared
+with its desktop screenshot. What held and what didn't:
+
+| | Pattern's guess | Brushing's desktop screenshot |
+|---|---|---|
+| Frame | 504..1501 x 54..1062 | same (505..1498 x 65..1057) |
+| Art scale | 0.61 of the phone's | 0.605: holds |
+| Extra at the sides | about 200 phone px each side | 208: holds |
+| Vertical view | wake: headboard cut, more below | shows phone rows ~390..2000: top cut, more below |
+| Card | phone card at 0.521 | 558 x 244: the width holds (0.513), the card is flatter than the phone's |
+| Bar | phone bar at 0.521, just above the card | 420 x 30 inside a white ring, 40 above the card: bigger than 0.521 |
+| Colours | the phone's | different: the desktop bathroom is in daylight, the phone's at night |
+
+So the scene's placement and scale are safe to predict, and so is the card's
+width; the scenery at the sides, the card's height, the bar's size and even
+the palette need the desktop screenshot. Without one, fill the panel's width
+(ch01-brush.js did, before its screenshot came) and move the view until the
+bar sits where it does on the phone.
+
+Drawing it (`ch01-brush.js`): trace the whole desktop panel, frame, card and
+bar ring included, with the card's inside blanked
+(`pages/ch01-brush-desk.json`); the screenshot is too small for the
+toothbrush's thin lines, so the phone's traced toothbrush is drawn in the card
+at the size measured on the screenshot (1.06), and that's what slides.
 
 Desktop screenshots come in lighter grain (about half the phone's) and softer
 (webp, smaller): `DESK_GRAIN`, and expect near-line error around 20-25.

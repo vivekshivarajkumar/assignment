@@ -4,14 +4,14 @@
 // to side to fill the bar. Then the camera pans on to the clock: 08:02.
 // The art is traced from the reference (ch01-brush-trace.js); this page only
 // paints it, slides the panel's toothbrush with the player's drag, and fills
-// the bar. On a desktop screen it follows the wake page's desktop layout
-// (measured there, no desktop screenshot of this page yet): the scene fills a
-// square framed panel, the toothbrush card at 0.521 hangs over its bottom edge.
+// the bar. On a desktop screen it's laid out as the desktop reference is: the
+// bathroom (in daylight there) in a square framed panel, traced from it
+// (ch01-brush-desk-trace.js), with the phone's traced toothbrush in its card.
 import { tapHint, rng, clamp, easeInOut } from '../paint.js'
 import { pop } from '../sound.js'
-import { K, bigDisplay, border, sheetTop, DESK, DESK_STEP, DESK_GRAIN, deskCloseUp } from './ch01-wake.js'
+import { K, bigDisplay, border, sheetTop, DESK_STEP, DESK_GRAIN, deskCloseUp } from './ch01-wake.js'
 import * as TRACE from './ch01-brush-trace.js'
-import * as NO_BAR from './ch01-brush-desk-trace.js'
+import * as DESK_TRACE from './ch01-brush-desk-trace.js'
 
 const REF = 1.5 // reference pixels to sheet units (a half-size, 600 px wide screenshot)
 // measured on the reference: the inside of the bar, and the inside of the
@@ -30,11 +30,11 @@ const FROM = 7 * 60 + 28
 const TO = 8 * 60 + 2
 const TICK = 0.045
 
-// Path2D objects are built the first time they're needed: the picture, and
-// for a desktop screen a patch of the room where the phone's bar was.
+// Path2D objects are built the first time they're needed: the phone picture,
+// and the desktop one.
 const art = {}
 function paths(name = 'picture') {
-  const { LAYERS, BRUSH, INK, INK_COLOR } = name === 'picture' ? TRACE : NO_BAR
+  const { LAYERS, BRUSH, INK, INK_COLOR } = name === 'picture' ? TRACE : DESK_TRACE
   art[name] ??= {
     layers: LAYERS.map(([color, d]) => [color, new Path2D(d)]),
     brush: [BRUSH[0], new Path2D(BRUSH[1])],
@@ -46,10 +46,10 @@ function paths(name = 'picture') {
 
 // Colour flat, then grain, then the brush and pen over everything, as on the
 // couch page. The art is traced at half-pixel steps, hence the halving.
-function paint(g, grain = GRAIN, a = paths()) {
+function paint(g, grain = GRAIN, a = paths(), [w, h] = [600, 1335]) {
   const tiles = grainTiles(g, grain)
   g.fillStyle = '#ffffff'
-  g.fillRect(0, 0, 600, 1335)
+  g.fillRect(0, 0, w, h)
   g.save()
   g.scale(0.5, 0.5)
   let paper = null
@@ -62,10 +62,10 @@ function paint(g, grain = GRAIN, a = paths()) {
   // grain over everything, then the white paper painted back clean
   g.globalCompositeOperation = 'lighter'
   g.fillStyle = tiles.up
-  g.fillRect(0, 0, 600, 1335)
+  g.fillRect(0, 0, w, h)
   g.globalCompositeOperation = 'difference'
   g.fillStyle = tiles.down
-  g.fillRect(0, 0, 600, 1335)
+  g.fillRect(0, 0, w, h)
   g.globalCompositeOperation = 'source-over'
   g.save()
   g.scale(0.5, 0.5)
@@ -152,9 +152,8 @@ function soften(c, sigma) {
 }
 
 // The same bar as the call, filling from the left with an ink edge.
-function bar(ctx, p) {
+function bar(ctx, p, { x, y, w, h } = BAR) {
   if (p <= 0) return
-  const { x, y, w, h } = BAR
   const fx = x + (w - 13) * p + 13
   ctx.save()
   ctx.beginPath()
@@ -172,20 +171,15 @@ function bar(ctx, p) {
 }
 
 // ---------- on a desktop screen ----------
-// In the wake page's desktop reference pixels (2000 x 1124). No desktop
-// screenshot of this page yet, so the scene fills the panel's width instead of
-// showing more at the sides as the wake page's does.
-const DESK_FRAME = [504, 54, 997, 1008] // outer edge; the ink is 11 thick
-const DESK_INNER = [515, 65, 975, 986]
-// the scene: 975 / 600 of the reference, from its row 290 down, so the bar sits under her chin as on the phone
-const DESK_SCENE = { x: 515, y: 65, scale: 975 / 600, from: 290 }
-// the toothbrush card, border and all (reference 28..572 x 897..1166), and the
-// bar's ring above it, at 0.521 of the phone's size, centred and hanging over
-// the panel's bottom edge as the wake page's clock card does
-const CARD_BOX = [28, 897, 544, 269]
-const RING = [72, 770, 450, 60, 30]
-const NO_BAR_AREA = [40, 768, 520, 64] // what the patch replaces
-const DESK_CARD = { x: 719, y: 820, scale: 1.042 }
+// In the desktop reference's pixels (2000 x 1118). The traced panel holds the
+// frame, the bathroom, the bar's ring and the toothbrush card with its inside
+// left blank; the phone's traced toothbrush is drawn in it at 1.06, its left end
+// (the phone reference's 104, 1017) at 798, 955, which is where the desktop
+// reference has it.
+const DESK_SIZE = [2000, 1118]
+const DESK_CARD = [729, 854, 546, 230] // the card's inside
+const DESK_BRUSH = { x: 798, y: 955, scale: 1.06, from: [104, 1017] }
+const DESK_BAR = { x: 792, y: 768, w: 420, h: 30 } // inside the ring
 
 // ---------- the page ----------
 
@@ -213,18 +207,18 @@ export default function brushTeeth(api) {
   // the copy is keyed on everything but the sideways offset and drawn at it;
   // painting takes too long to redo every frame of a pan. `name` keeps one
   // copy per placement (the desktop scene and card are placed differently).
-  function stillArt(ctx, name = 'phone', grain = GRAIN, a = paths()) {
+  function stillArt(ctx, name = 'phone', grain = GRAIN, a = paths(), size = [600, 1335]) {
     const m = ctx.getTransform()
     const { width, height } = ctx.canvas
     const key = [width, height, m.a, m.d, m.f].join()
     if (stills[name]?.key !== key) {
       const c = document.createElement('canvas')
       // wide enough for the whole picture, which can run past the screen's edge
-      c.width = Math.max(width, Math.ceil(600 * m.a))
+      c.width = Math.max(width, Math.ceil(size[0] * m.a))
       c.height = height
       const g = c.getContext('2d')
       g.setTransform(m.a, m.b, m.c, m.d, 0, m.f)
-      paint(g, grain, a)
+      paint(g, grain, a, size)
       soften(c, SOFT * m.a)
       stills[name] = { key, canvas: c }
     }
@@ -240,8 +234,8 @@ export default function brushTeeth(api) {
   // the panel's toothbrush follows the drag: the panel's inside, which is only
   // the toothbrush on white, is copied again shifted (only the inside, so the
   // border and the room beside it don't slide in with it)
-  function slide(ctx, picture) {
-    if (dx === 0) return
+  function slide(ctx, picture, always = false) {
+    if (dx === 0 && !always) return
     const m = ctx.getTransform()
     const { x, y, w, h: ph } = PANEL
     ctx.save()
@@ -259,11 +253,11 @@ export default function brushTeeth(api) {
 
   // on a desktop screen: the reference window fitted to the real one
   const fit = () => {
-    const k = Math.min(api.height() / DESK.h, api.width() / 1200)
-    return { k, x: (api.width() - DESK.w * k) / 2, y: (api.height() - DESK.h * k) / 2 }
+    const k = Math.min(api.height() / DESK_SIZE[1], api.width() / 1200)
+    return { k, x: (api.width() - DESK_SIZE[0] * k) / 2, y: (api.height() - DESK_SIZE[1] * k) / 2 }
   }
-  // the card's placement, from reference pixels to desktop reference pixels
-  const cardAt = (x, y) => [DESK_CARD.x + (x - CARD_BOX[0]) * DESK_CARD.scale, DESK_CARD.y + (y - CARD_BOX[1]) * DESK_CARD.scale]
+  // the toothbrush's placement, from phone reference pixels to desktop ones
+  const brushAt = (x, y) => [DESK_BRUSH.x + (x - DESK_BRUSH.from[0]) * DESK_BRUSH.scale, DESK_BRUSH.y + (y - DESK_BRUSH.from[1]) * DESK_BRUSH.scale]
   const deskToScreen = ([x, y]) => {
     const f = fit()
     return [f.x + x * f.k, f.y + y * f.k]
@@ -276,39 +270,18 @@ export default function brushTeeth(api) {
     ctx.translate(f.x, f.y)
     ctx.scale(f.k, f.k)
     ctx.translate((offset / PAN) * DESK_STEP, 0)
-    // the scene in its framed panel
+    // the traced panel, then the phone's toothbrush in the card, sliding
+    copyIn(ctx, stillArt(ctx, 'desk', DESK_GRAIN, paths('desk'), DESK_SIZE))
     ctx.save()
     ctx.beginPath()
-    ctx.rect(...DESK_INNER)
+    ctx.rect(...DESK_CARD)
     ctx.clip()
-    ctx.translate(DESK_SCENE.x, DESK_SCENE.y)
-    ctx.scale(DESK_SCENE.scale, DESK_SCENE.scale)
-    ctx.translate(0, -DESK_SCENE.from)
-    copyIn(ctx, stillArt(ctx, 'desk-scene', DESK_GRAIN))
-    ctx.beginPath()
-    ctx.rect(...NO_BAR_AREA)
-    ctx.clip()
-    copyIn(ctx, stillArt(ctx, 'desk-no-bar', DESK_GRAIN, paths('no-bar')))
+    ctx.translate(DESK_BRUSH.x, DESK_BRUSH.y)
+    ctx.scale(DESK_BRUSH.scale, DESK_BRUSH.scale)
+    ctx.translate(-DESK_BRUSH.from[0], -DESK_BRUSH.from[1])
+    slide(ctx, stillArt(ctx, 'desk-brush', DESK_GRAIN), true)
     ctx.restore()
-    ctx.strokeStyle = K.ink
-    ctx.lineWidth = 11
-    ctx.strokeRect(DESK_FRAME[0] + 5.5, DESK_FRAME[1] + 5.5, DESK_FRAME[2] - 11, DESK_FRAME[3] - 11)
-    // the card and the bar's ring, copied from the traced art at the card's size
-    ctx.save()
-    ctx.translate(DESK_CARD.x, DESK_CARD.y)
-    ctx.scale(DESK_CARD.scale, DESK_CARD.scale)
-    ctx.translate(-CARD_BOX[0], -CARD_BOX[1])
-    const card = stillArt(ctx, 'desk-card', DESK_GRAIN)
-    ctx.save()
-    ctx.beginPath()
-    ctx.rect(...CARD_BOX)
-    ctx.roundRect(...RING)
-    ctx.clip()
-    copyIn(ctx, card)
-    ctx.restore()
-    slide(ctx, card)
-    bar(ctx, strokes / STROKES)
-    ctx.restore()
+    bar(ctx, strokes / STROKES, DESK_BAR)
     // the clock close-ups either side
     if (offset > 0) deskCloseUp(ctx, '0728', -1, 0, -DESK_STEP)
     if (doneAt !== null) {
@@ -317,7 +290,7 @@ export default function brushTeeth(api) {
       deskCloseUp(ctx, hhmm(m), m < TO && tick > 0 ? 3 : -1, m < TO && tick > 0 ? tick % 1 : 0)
     }
     ctx.restore()
-    if (t > PAN_TIME && strokes === 0 && !dragging) tapHint(ctx, ...deskToScreen(cardAt(GRIP[0] + dx, GRIP[1])), t, K.ink)
+    if (t > PAN_TIME && strokes === 0 && !dragging) tapHint(ctx, ...deskToScreen(brushAt(GRIP[0] + dx, GRIP[1])), t, K.ink)
     if (countDone(t)) tapHint(ctx, 50, 50, t)
   }
 
@@ -325,7 +298,7 @@ export default function brushTeeth(api) {
     tall: true,
     wide: true, // it has a desktop layout
     debug: () => ({
-      from: api.wide() ? deskToScreen(cardAt(GRIP[0] + dx, GRIP[1])) : toScreen(GRIP[0] + dx, GRIP[1]),
+      from: api.wide() ? deskToScreen(brushAt(GRIP[0] + dx, GRIP[1])) : toScreen(GRIP[0] + dx, GRIP[1]),
       strokes,
       done: doneAt !== null,
     }),
@@ -390,10 +363,9 @@ export default function brushTeeth(api) {
       if (t < PAN_TIME) return
       if (api.wide()) {
         const f = fit()
-        const [a, b] = cardAt(PANEL.x, PANEL.y)
-        const [c, d] = cardAt(PANEL.x + PANEL.w, PANEL.y + PANEL.h)
+        const [cx, cy, cw, ch] = DESK_CARD
         const [rx, ry] = [(x - f.x) / f.k, (y - f.y) / f.k]
-        if (rx > a && rx < c && ry > b && ry < d) dragging = { x }
+        if (rx > cx && rx < cx + cw && ry > cy && ry < cy + ch) dragging = { x }
         return
       }
       const [, ry] = toRef(x, y)
@@ -402,7 +374,7 @@ export default function brushTeeth(api) {
     move(x, y, t) {
       if (!dragging || doneAt !== null) return
       // follow the finger's movement since the last event, so the brush never sticks at an end
-      const perRef = api.wide() ? fit().k * DESK_CARD.scale : 0.6 * REF // screen units per reference pixel
+      const perRef = api.wide() ? fit().k * DESK_BRUSH.scale : 0.6 * REF // screen units per reference pixel
       const next = clamp(dx + (x - dragging.x) / perRef, -REACH, REACH)
       dragging.x = x
       const d = next - dx

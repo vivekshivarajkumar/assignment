@@ -19,6 +19,10 @@ DEFAULTS = {
     'ink_smooth': 0.9,  # blur on the 2x ink mask before contouring
     'ink_eps': 0.45,  # polygon simplification for ink, in reference pixels
     'ink_min_area': 5,  # smaller specks of ink, and holes in it (stars in a night sky), are dropped
+    # contours run through pixel centres, so a traced stroke comes out half a
+    # 2x pixel thinner on each side; 1 grows the pen back by that (worth it on
+    # a half-size screenshot, where eyes are dashes two pixels tall)
+    'ink_grow': 0,
     'brush_min_dark': 38,  # a stroke whose darkest point stays above this is grey brush, not pen
     'solid_max_gray': 78,  # top of the tone band of solid mid-dark areas (hair, dark tiles)
     # kernel sizes, in reference pixels, tuned on a full-size (1200 px wide)
@@ -160,11 +164,13 @@ def trace(ref, cfg):
     bgr = np.where((bgr > 244).all(1, keepdims=True), 255, bgr).astype(np.uint8)
     hexes = ['#%02x%02x%02x' % (int(v[2]), int(v[1]), int(v[0])) for v in bgr]
 
-    def path_soft(soft, eps, min_area, smooth=0.9):
+    def path_soft(soft, eps, min_area, smooth=0.9, grow=0):
         # contour the 0.5 level of a soft mask at 2x, so edges land between pixels
         big = cv2.resize(soft.astype(np.float32), (w * UP, h * UP), interpolation=cv2.INTER_CUBIC)
         big = cv2.GaussianBlur(big, (0, 0), smooth)
         m = (big > 0.5).astype(np.uint8)
+        if grow:
+            m = cv2.dilate(m, np.ones((2, 2), np.uint8))
         m[:TOP * UP] = 0
         cs, _ = cv2.findContours(m, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         out = []
@@ -190,7 +196,7 @@ def trace(ref, cfg):
     brush = ink & (darkest > c['brush_min_dark'])
     pen_soft = np.where(brush, 0, ink_soft)
     brush_soft = np.where(brush, ink_soft, 0)
-    inkd = path_soft(pen_soft, c['ink_eps'], c['ink_min_area'], c['ink_smooth'])
+    inkd = path_soft(pen_soft, c['ink_eps'], c['ink_min_area'], c['ink_smooth'], c['ink_grow'])
     brushd = path_soft(brush_soft, 0.45, 4)
     hexof = lambda v: '#%02x%02x%02x' % (int(v[2]), int(v[1]), int(v[0]))
     inkhex = hexof(np.median(ref[ink & (gray < 30)], 0))

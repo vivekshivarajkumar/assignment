@@ -105,7 +105,7 @@ true and the page draws in CSS pixels of the whole window (`api.width()` x
 the worked example: `drawDesk`, `DESK_*`. Offscreen art canvases must be as
 wide as the art, not the window, or a narrow window cuts it off.
 
-Tested on the brushing page: laid out from the pattern first, then compared
+Tested on the (morning) brushing page: laid out from the pattern first, then compared
 with its desktop screenshot. What held and what didn't:
 
 | | Pattern's guess | Brushing's desktop screenshot |
@@ -116,7 +116,7 @@ with its desktop screenshot. What held and what didn't:
 | Vertical view | wake: headboard cut, more below | shows phone rows ~390..2000: top cut, more below |
 | Card | phone card at 0.521 | 558 x 244: the width holds (0.513), the card is flatter than the phone's |
 | Bar | phone bar at 0.521, just above the card | 420 x 30 inside a white ring, 40 above the card: bigger than 0.521 |
-| Colours | the phone's | different: the desktop bathroom is in daylight, the phone's at night |
+| Colours | the phone's | the same once compared with the right phone scene (the morning one, in daylight) |
 
 So the scene's placement and scale are safe to predict, and so is the card's
 width; the scenery at the sides, the card's height, the bar's size and even
@@ -246,6 +246,7 @@ Each of these cost a round on the couch. The symptom is how you'll recognise it.
 | The screenshot has text the game must not show (another character's name on a label) | It's part of the image | `paint` a rect of the label's own colour over it, trace the label, and write the page's text live on it (`pages/ch01-wake.json`) |
 | Something animated in the screenshot (the wake page's clock card drops, shakes, flips) | Baked in, it can't move, and nobody has seen what's behind it | Trace it alone (`keep`, with what changes blanked, `pages/ch01-wake-card.json`), copy its painted canvas in under the moving transform, and draw only the changing part live. Fill what's behind it with `tile`: repeat real rows of the same pattern from nearby |
 | A measure moves between runs on the same code | Something in the shot animates (a shaking card) | Compare that part by eye in a crop, or read the other bands |
+| A page traced "right" but in the wrong light (brushing: night art on the morning page) | The same scene happens twice in the story, and the reference was of the other one | Before tracing, ask which moment the screenshot is; the page's time of day must match the story. `ch01-brush.js` now serves both, one scene object each |
 | Test "passes" but the fix isn't working | A Playwright `load` wait includes fonts; cached files skip `route()`; `document.fonts.check()` says loaded while loading | Measure order from navigation, a fresh browser context, gate on `document.fonts.load()`, and a negative control |
 
 ## Budget

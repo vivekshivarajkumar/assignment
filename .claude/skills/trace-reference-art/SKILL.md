@@ -119,8 +119,8 @@ with its desktop screenshot. What held and what didn't:
 | Colours | the phone's | the same once compared with the right phone scene (the morning one, in daylight) |
 
 So the scene's placement and scale are safe to predict, and so is the card's
-width; the scenery at the sides, the card's height, the bar's size and even
-the palette need the desktop screenshot. Without one, fill the panel's width
+width, and the colours match the phone's; the scenery at the sides, the
+card's height and the bar's size need the desktop screenshot. Without one, fill the panel's width
 (ch01-brush.js did, before its screenshot came) and move the view until the
 bar sits where it does on the phone.
 

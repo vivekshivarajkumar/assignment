@@ -1,24 +1,46 @@
-// Chapter 1, page 2 · brushing teeth
-// The camera pans on from the 07:28 clock into the bathroom at night. Mira
-// brushes her teeth, half asleep; drag the toothbrush in the panel below side
-// to side to fill the bar. Then the camera pans on to the clock: 08:02.
-// The art is traced from the reference (ch01-brush-trace.js); this page only
-// paints it, slides the panel's toothbrush with the player's drag, and fills
-// the bar. On a desktop screen it's laid out as the desktop reference is: the
-// bathroom (in daylight there) in a square framed panel, traced from it
-// (ch01-brush-desk-trace.js), with the phone's traced toothbrush in its card.
+// Chapter 1, pages 2 and 8 · brushing teeth, morning and night
+// Morning: the camera pans on from the 07:28 clock into the bathroom in
+// daylight. Mira brushes her teeth, half asleep; drag the toothbrush in the
+// panel below side to side to fill the bar. Then the camera pans on to the
+// clock: 08:02. Night, after the sushi: the same, in the dark, with no clocks;
+// once she's done, tap to go on.
+// Each scene's art is traced from its reference (ch01-brush-trace.js,
+// ch01-brush-night-trace.js); this page only paints it, slides the panel's
+// toothbrush with the player's drag, and fills the bar. On a desktop screen the
+// morning is laid out as its desktop reference is: the bathroom in a square
+// framed panel, traced from it (ch01-brush-desk-trace.js), with the phone's
+// traced toothbrush in its card. The night has no desktop screenshot yet, so
+// it keeps the phone's column there.
 import { tapHint, rng, clamp, easeInOut } from '../paint.js'
 import { pop } from '../sound.js'
 import { K, bigDisplay, border, sheetTop, DESK_STEP, DESK_GRAIN, deskCloseUp } from './ch01-wake.js'
-import * as TRACE from './ch01-brush-trace.js'
+import * as MORNING_TRACE from './ch01-brush-trace.js'
+import * as NIGHT_TRACE from './ch01-brush-night-trace.js'
 import * as DESK_TRACE from './ch01-brush-desk-trace.js'
 
 const REF = 1.5 // reference pixels to sheet units (a half-size, 600 px wide screenshot)
-// measured on the reference: the inside of the bar, and the inside of the
-// toothbrush panel's border
-const BAR = { x: 93, y: 786, w: 412, h: 32 }
-const PANEL = { x: 34, y: 903, w: 530, h: 257 }
-const GRIP = [420, 1045] // on the toothbrush's handle, where the hint shows
+// Each scene, measured on its reference: the inside of the bar, the inside of
+// the toothbrush panel's border, and a point on the toothbrush's handle where
+// the hint shows. The morning also has the clocks either side and a desktop
+// layout.
+const MORNING = {
+  name: 'morning',
+  trace: MORNING_TRACE,
+  bar: { x: 93, y: 848, w: 412, h: 32 },
+  panel: { x: 34, y: 925, w: 530, h: 229 },
+  grip: [420, 1053],
+  clocks: true,
+  desk: true,
+}
+const NIGHT = {
+  name: 'night',
+  trace: NIGHT_TRACE,
+  bar: { x: 93, y: 786, w: 412, h: 32 },
+  panel: { x: 34, y: 903, w: 530, h: 257 },
+  grip: [420, 1045],
+  clocks: false,
+  desk: false,
+}
 const REACH = 60 // how far the toothbrush slides either way, in reference pixels
 const FILL = '#6fd2fb' // the call's bar colour
 const SOFT = 0.3 // edge blur, in reference pixels (the couch's 0.6 at half size)
@@ -30,11 +52,11 @@ const FROM = 7 * 60 + 28
 const TO = 8 * 60 + 2
 const TICK = 0.045
 
-// Path2D objects are built the first time they're needed: the phone picture,
-// and the desktop one.
+// Path2D objects are built the first time they're needed: each scene's phone
+// picture, and the morning's desktop one.
 const art = {}
-function paths(name = 'picture') {
-  const { LAYERS, BRUSH, INK, INK_COLOR } = name === 'picture' ? TRACE : DESK_TRACE
+function paths(name) {
+  const { LAYERS, BRUSH, INK, INK_COLOR } = { morning: MORNING_TRACE, night: NIGHT_TRACE, desk: DESK_TRACE }[name]
   art[name] ??= {
     layers: LAYERS.map(([color, d]) => [color, new Path2D(d)]),
     brush: [BRUSH[0], new Path2D(BRUSH[1])],
@@ -46,7 +68,7 @@ function paths(name = 'picture') {
 
 // Colour flat, then grain, then the brush and pen over everything, as on the
 // couch page. The art is traced at half-pixel steps, hence the halving.
-function paint(g, grain = GRAIN, a = paths(), [w, h] = [600, 1335]) {
+function paint(g, grain, a, [w, h] = [600, 1335]) {
   const tiles = grainTiles(g, grain)
   g.fillStyle = '#ffffff'
   g.fillRect(0, 0, w, h)
@@ -152,7 +174,7 @@ function soften(c, sigma) {
 }
 
 // The same bar as the call, filling from the left with an ink edge.
-function bar(ctx, p, { x, y, w, h } = BAR) {
+function bar(ctx, p, { x, y, w, h }) {
   if (p <= 0) return
   const fx = x + (w - 13) * p + 13
   ctx.save()
@@ -173,18 +195,25 @@ function bar(ctx, p, { x, y, w, h } = BAR) {
 // ---------- on a desktop screen ----------
 // In the desktop reference's pixels (2000 x 1118). The traced panel holds the
 // frame, the bathroom, the bar's ring and the toothbrush card with its inside
-// left blank; the phone's traced toothbrush is drawn in it at 1.06, its left end
-// (the phone reference's 104, 1017) at 798, 955, which is where the desktop
-// reference has it.
+// left blank; the morning's phone-traced toothbrush is drawn in it at 1.06, its
+// left end (the phone reference's 104, 1025) at 798, 955, which is where the
+// desktop reference has it.
 const DESK_SIZE = [2000, 1118]
 const DESK_CARD = [729, 854, 546, 230] // the card's inside
-const DESK_BRUSH = { x: 798, y: 955, scale: 1.06, from: [104, 1017] }
+const DESK_BRUSH = { x: 798, y: 955, scale: 1.06, from: [104, 1025] }
 const DESK_BAR = { x: 792, y: 768, w: 420, h: 30 } // inside the ring
 
 // ---------- the page ----------
 
-export default function brushTeeth(api) {
-  const PAN_TIME = 1.4
+function brushing(scene) {
+  return (api) => brushingPage(api, scene)
+}
+export default brushing(MORNING)
+export const brushTeethAtNight = brushing(NIGHT)
+
+function brushingPage(api, scene) {
+  const { bar: BAR, panel: PANEL, grip: GRIP } = scene
+  const PAN_TIME = scene.clocks ? 1.4 : 0.6 // no taps until the pan (or the fade) is done
   let dx = 0 // how far the panel's toothbrush has slid, in reference pixels
   let dragging = null
   let lastDir = 0
@@ -195,19 +224,20 @@ export default function brushTeeth(api) {
   const top = () => sheetTop(api.height())
   const toRef = (x, y) => [x / 0.6 / REF, (y / 0.6 + top()) / REF]
   const toScreen = (x, y) => [x * REF * 0.6, (y * REF - top()) * 0.6]
-  const panned = (t) => easeInOut(t / PAN_TIME)
+  const panned = (t) => (scene.clocks ? easeInOut(t / PAN_TIME) : 1)
   // after the last stroke: pause, pan right to the clock, tick on to 08:02
-  const panOut = (t) => (doneAt === null ? 0 : easeInOut((t - doneAt - 0.7) / 1.4) * PANEL_X)
+  const panOut = (t) => (doneAt === null || !scene.clocks ? 0 : easeInOut((t - doneAt - 0.7) / 1.4) * PANEL_X)
   const tickStart = () => doneAt + 2.3
   const minuteAt = (t) => Math.min(TO, FROM + Math.max(0, Math.floor((t - tickStart()) / TICK)))
-  const countDone = (t) => doneAt !== null && t > tickStart() + (TO - FROM) * TICK + 0.4
+  // at night there's no clock: done a moment after the last stroke
+  const countDone = (t) => doneAt !== null && t > (scene.clocks ? tickStart() + (TO - FROM) * TICK + 0.4 : doneAt + 0.8)
   const hhmm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}${String(m % 60).padStart(2, '0')}`
 
   // The traced art, painted once and copied in. The camera pans sideways, so
   // the copy is keyed on everything but the sideways offset and drawn at it;
   // painting takes too long to redo every frame of a pan. `name` keeps one
   // copy per placement (the desktop scene and card are placed differently).
-  function stillArt(ctx, name = 'phone', grain = GRAIN, a = paths(), size = [600, 1335]) {
+  function stillArt(ctx, name = 'phone', grain = GRAIN, a = paths(scene.name), size = [600, 1335]) {
     const m = ctx.getTransform()
     const { width, height } = ctx.canvas
     const key = [width, height, m.a, m.d, m.f].join()
@@ -296,7 +326,7 @@ export default function brushTeeth(api) {
 
   return {
     tall: true,
-    wide: true, // it has a desktop layout
+    wide: scene.desk, // the morning has a desktop layout
     debug: () => ({
       from: api.wide() ? deskToScreen(brushAt(GRIP[0] + dx, GRIP[1])) : toScreen(GRIP[0] + dx, GRIP[1]),
       strokes,
@@ -320,10 +350,10 @@ export default function brushTeeth(api) {
       const picture = stillArt(ctx)
       copyIn(ctx, picture)
       slide(ctx, picture)
-      bar(ctx, strokes / STROKES)
+      bar(ctx, strokes / STROKES, BAR)
       ctx.restore()
 
-      if (doneAt !== null) {
+      if (doneAt !== null && scene.clocks) {
         // the clock close-up to the right, which we pan to once she's done
         const bottom = top() + h / 0.6
         ctx.fillStyle = '#ffffff'

@@ -1,14 +1,14 @@
 {
-  "page": "ch01-brush",
-  "title": "Chapter 1, page 2",
-  "out": "src/game/chapters/ch01-brush-trace.js",
+  "page": "ch01-brush-night",
+  "title": "Chapter 1, page 8",
+  "out": "src/game/chapters/ch01-brush-night-trace.js",
   "reference": {
     "size": [
       600,
       1335
     ],
-    "sha256": "b6662563f515356b5111e1a672b514b2688a21ba6c0b0c617d63e39a4fbd1fd9",
-    "note": "phone screenshot shared in chat (half size, JPEG), Mira brushing her teeth in the morning, in daylight; not kept in the repo"
+    "sha256": "0584af89c4f7f31c5a2203f10038bb2009357f9288aa57d32a79e21701bda246",
+    "note": "phone screenshot shared in chat (half size, JPEG), Mira brushing her teeth at night, after the sushi; not kept in the repo"
   },
   "trace": {
     "status_bar": 39,
@@ -33,10 +33,10 @@
       },
       {
         "rect": [
-          546,
-          126,
-          570,
-          134
+          548,
+          117,
+          564,
+          131
         ],
         "sample": [
           556,
@@ -45,30 +45,43 @@
         "what": "the cabinet frame it hid"
       },
       {
+        "rect": [
+          568,
+          117,
+          576,
+          129
+        ],
+        "sample": [
+          586,
+          123
+        ],
+        "what": "the cabinet's top shelf"
+      },
+      {
         "line": [
-          543,
-          124,
-          600,
-          124
+          544,
+          115,
+          578,
+          115
         ],
         "width": 4,
         "what": "the cabinet's top edge"
       },
       {
         "line": [
-          544,
-          122,
-          544,
-          136
+          546,
+          113,
+          546,
+          134
         ],
         "width": 4
       },
       {
         "line": [
-          567,
-          126,
-          567,
-          136
+          566,
+          115,
+          566,
+          134
         ],
         "width": 4
       }

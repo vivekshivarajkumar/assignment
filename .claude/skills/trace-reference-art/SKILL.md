@@ -23,6 +23,10 @@ traps table are what you'll come back to.
   code at all: `grep` for what's in the picture, and render the nearest page to
   compare. Then ask the user where the scene belongs if the story doesn't make
   it obvious.
+- **What size is it?** A screenshot shared in chat can arrive at half size
+  (600 x 1335 for the brushing page). Everything still works in reference
+  pixels, with `REF` = 900 / width, but the kernel sizes in the config need
+  halving (see *Traps*).
 - **Keep the reference out of the repo.** It's someone else's art. The page
   config records its size and sha256 instead, so a later run can check it has
   the same image.
@@ -163,6 +167,10 @@ Each of these cost a round on the couch. The symptom is how you'll recognise it.
 | The screenshot's own button gets traced | It's part of the image | `erase` in the config, with lines carried through |
 | Removing items leaves outlines or seams | Regions didn't own the floor between them; each drawn separately | Regions take the floor gaps; removed ones are filled as one shape |
 | Removed item shows a grey cut-out | Wrong floor colour: the sample caught nearby grey | Sample within the floor's gray band; check the preview |
+| Hair turns into black blocks, dark tiles trace as grey brush, thin grout vanishes (brushing page) | A half-size screenshot (600 px wide): the 7 px solid-area opening and 3 px speck opening are too big for it, and the tiles are darker than the solid band | `solid_open` 4, `speck` 2, `solid_max_gray` 100 in the config; halve `SOFT` and retune `GRAIN` (0.3 and 0.9 there) |
+| Stars in a night window disappear | Ink holes under `ink_min_area` are dropped | `ink_min_area` 1.5 |
+| The screenshot's button covers a corner, not a line running through | `erase` can only carry straight lines through | `paint` in the config: fill it with the wall, then draw the corner back (rects sampled from nearby, pen lines) |
+| A page that pans repaints its art every frame | The still-art cache is keyed on the whole transform | Key on everything but the sideways offset and draw the copy at it (`ch01-brush.js`) |
 | Test "passes" but the fix isn't working | A Playwright `load` wait includes fonts; cached files skip `route()`; `document.fonts.check()` says loaded while loading | Measure order from navigation, a fresh browser context, gate on `document.fonts.load()`, and a negative control |
 
 ## Budget

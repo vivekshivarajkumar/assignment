@@ -14,10 +14,17 @@ DEFAULTS = {
     'colors': 16,  # k-means clusters before near-duplicates are merged
     'merge_below': 3.0,  # Lab distance under which two colours are one
     'erase': [],  # [{"circle": [x, y, r], "carry_vertical_lines": true}]
+    'paint': [],  # drawn onto the reference first, to rebuild art a button hides (see below)
     'erase_fill_min_gray': 150,  # what counts as plain background around an erased thing
     'ink_smooth': 0.9,  # blur on the 2x ink mask before contouring
     'ink_eps': 0.45,  # polygon simplification for ink, in reference pixels
+    'ink_min_area': 5,  # smaller specks of ink, and holes in it (stars in a night sky), are dropped
     'brush_min_dark': 38,  # a stroke whose darkest point stays above this is grey brush, not pen
+    'solid_max_gray': 78,  # top of the tone band of solid mid-dark areas (hair, dark tiles)
+    # kernel sizes, in reference pixels, tuned on a full-size (1200 px wide)
+    # screenshot; about halve them for a half-size one
+    'solid_open': 7,  # opening that tells solid areas from line rims
+    'speck': 3,  # colour patches narrower than this are dropped
 }
 
 
@@ -38,6 +45,19 @@ def trace(ref, cfg):
     c = {**DEFAULTS, **cfg}
     K, TOP = c['colors'], c['status_bar']
     h, w = ref.shape[:2]
+    # where a button sits over art that doesn't run straight through it (a
+    # corner), paint the art back by hand: circles and rects take the colour
+    # at a sample point, lines are pen black (samples are 7 x 7 medians)
+    ref = ref.copy()
+    for s in c['paint']:
+        x, y = s.get('sample', (None, None))
+        col = tuple(int(v) for v in np.median(ref[y - 3:y + 4, x - 3:x + 4].reshape(-1, 3), 0)) if x else (8, 8, 8)
+        if 'circle' in s:
+            cv2.circle(ref, tuple(s['circle'][:2]), s['circle'][2], col, -1, cv2.LINE_AA)
+        elif 'rect' in s:
+            cv2.rectangle(ref, tuple(s['rect'][:2]), tuple(s['rect'][2:]), col, -1)
+        else:
+            cv2.line(ref, tuple(s['line'][:2]), tuple(s['line'][2:]), col, s['width'], cv2.LINE_AA)
     gray = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY).astype(np.float32)
 
     # things in the screenshot that aren't the page (the game's own buttons):
@@ -57,8 +77,8 @@ def trace(ref, cfg):
     # only passes through that tone at its 1-2 px anti-aliased rim, so an
     # opening keeps the areas and drops the rims
     g3 = cv2.medianBlur(gray.astype(np.uint8), 3)
-    mid = ((g3 >= 26) & (g3 <= 78)).astype(np.uint8)
-    hairzone = cv2.morphologyEx(mid, cv2.MORPH_OPEN, np.ones((7, 7), np.uint8)) > 0
+    mid = ((g3 >= 26) & (g3 <= c['solid_max_gray'])).astype(np.uint8)
+    hairzone = cv2.morphologyEx(mid, cv2.MORPH_OPEN, np.ones((c['solid_open'],) * 2, np.uint8)) > 0
     # the local paper/fill tone, from pixels that are clearly not ink
     rough = (gray < 90) & ~(hairzone & (gray >= 22))
     fill_est, _ = nconv(gray, (~rough).astype(np.float32), 21)
@@ -101,7 +121,7 @@ def trace(ref, cfg):
     # and give the gaps to whatever surrounds them
     clean = np.full((h, w), 255, np.uint8)
     for k in range(K):
-        m = cv2.morphologyEx((labels == k).astype(np.uint8), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        m = cv2.morphologyEx((labels == k).astype(np.uint8), cv2.MORPH_OPEN, np.ones((c['speck'],) * 2, np.uint8))
         clean[m > 0] = k
     holes = clean == 255
     if holes.any():
@@ -170,7 +190,7 @@ def trace(ref, cfg):
     brush = ink & (darkest > c['brush_min_dark'])
     pen_soft = np.where(brush, 0, ink_soft)
     brush_soft = np.where(brush, ink_soft, 0)
-    inkd = path_soft(pen_soft, c['ink_eps'], 5, c['ink_smooth'])
+    inkd = path_soft(pen_soft, c['ink_eps'], c['ink_min_area'], c['ink_smooth'])
     brushd = path_soft(brush_soft, 0.45, 4)
     hexof = lambda v: '#%02x%02x%02x' % (int(v[2]), int(v[1]), int(v[0]))
     inkhex = hexof(np.median(ref[ink & (gray < 30)], 0))

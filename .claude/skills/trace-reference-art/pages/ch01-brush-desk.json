@@ -1,0 +1,39 @@
+{
+  "page": "ch01-brush-desk",
+  "title": "Chapter 1, page 2, on a desktop screen",
+  "out": "src/game/chapters/ch01-brush-desk-trace.js",
+  "reference": {
+    "size": [
+      2000,
+      1118
+    ],
+    "sha256": "4160930b6354bd9c2d80b56311006a1ae25983e3c072dd37c28f35ab9805978b",
+    "note": "desktop screenshot shared in chat (webp) before brushing starts: the bathroom in a square framed panel, in daylight, the bar and the toothbrush card over it; not kept in the repo"
+  },
+  "trace": {
+    "colors": 18,
+    "keep": [
+      [
+        494,
+        56,
+        1512,
+        1102
+      ]
+    ],
+    "paint": [
+      {
+        "rect": [
+          729,
+          854,
+          1275,
+          1084
+        ],
+        "sample": [
+          760,
+          880
+        ],
+        "what": "the inside of the toothbrush card (and the tap hint on it): the page draws the phone's traced toothbrush there, which slides"
+      }
+    ]
+  }
+}

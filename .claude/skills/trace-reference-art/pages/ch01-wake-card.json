@@ -1,0 +1,23 @@
+{
+  "page": "ch01-wake-card",
+  "title": "Chapter 1, page 1, the clock card",
+  "out": "src/game/chapters/ch01-wake-card-trace.js",
+  "reference": {
+    "size": [1200, 2670],
+    "sha256": "6408d8a21dfe9eaf09a815d2642a4925e348ef36f331b95e18ebd333e119db68",
+    "note": "the 7:00 screenshot again: only its clock card, which the page drops and brings back"
+  },
+  "trace": {
+    "status_bar": 77,
+    "colors": 16,
+    "keep": [[56, 1748, 1156, 2376]],
+    "paint": [
+      { "rect": [398, 2028, 472, 2164], "sample": [340, 2060], "what": "the digits on the flaps: the page flips its own" },
+      { "rect": [526, 2028, 600, 2164], "sample": [340, 2060] },
+      { "rect": [625, 2028, 698, 2164], "sample": [340, 2060] },
+      { "line": [398, 2097, 472, 2097], "width": 4, "what": "the split in each flap, back over them" },
+      { "line": [526, 2097, 600, 2097], "width": 4 },
+      { "line": [625, 2097, 698, 2097], "width": 4 }
+    ]
+  }
+}

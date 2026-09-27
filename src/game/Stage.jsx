@@ -12,6 +12,9 @@ const FADE = 0.45
 //  - a page that sets `tall: true` draws over the full height, api.height()
 //  - any other page is drawn in a W x H band centred on the screen, and the band's
 //    top and bottom rows are stretched to fill the space above and below it.
+// A page that sets `wide: true` has a desktop layout as well: on a landscape
+// window the page takes the whole window, api.wide() is true, and the page draws
+// and gets taps in CSS pixels of the window, api.width() x api.height().
 export default function Stage({ page, onDone, paused = false }) {
   const canvasRef = useRef(null)
   const onDoneRef = useRef(onDone)
@@ -33,10 +36,14 @@ export default function Stage({ page, onDone, paused = false }) {
     let pausedFor = 0 // ms spent paused, left out of the page's clock
     const clock = () => (now - start - pausedFor) / 1000
     let height = H // logical height of the screen
+    let wide = false // the page's desktop layout, on a landscape window
+    let cssWidth = W
 
     const api = {
       memory,
       height: () => height,
+      width: () => (wide ? cssWidth : W),
+      wide: () => wide,
       finish(value) {
         if (finishedAt !== null) return
         finishedAt = now
@@ -48,15 +55,19 @@ export default function Stage({ page, onDone, paused = false }) {
     window.__game = { finish: api.finish, scene }
 
     // where the W x H band of an ordinary page starts, in logical units
-    const bandTop = () => (scene.tall ? 0 : (height - H) / 2)
+    const bandTop = () => (scene.tall || wide ? 0 : (height - H) / 2)
     window.__game.bandTop = bandTop
 
+    const screen = canvas.parentElement
     const resize = () => {
+      wide = !!scene.wide && window.innerWidth > window.innerHeight * 1.2
+      screen.classList.toggle('wide', wide)
       const dpr = window.devicePixelRatio || 1
       const rect = canvas.getBoundingClientRect()
       canvas.width = Math.round(rect.width * dpr)
       canvas.height = Math.round(rect.height * dpr)
-      height = Math.max(H, (W * rect.height) / rect.width)
+      cssWidth = rect.width
+      height = wide ? rect.height : Math.max(H, (W * rect.height) / rect.width)
     }
     resize()
     window.addEventListener('resize', resize)
@@ -73,7 +84,7 @@ export default function Stage({ page, onDone, paused = false }) {
       const dt = Math.min(0.05, (ts - last) / 1000)
       last = ts
       const t = clock()
-      const s = canvas.width / W
+      const s = canvas.width / (wide ? cssWidth : W)
       const top = bandTop()
       ctx.setTransform(s, 0, 0, s, 0, top * s)
       ctx.globalAlpha = 1
@@ -112,7 +123,7 @@ export default function Stage({ page, onDone, paused = false }) {
 
     const toLogical = (e) => {
       const r = canvas.getBoundingClientRect()
-      const k = W / r.width
+      const k = (wide ? r.width : W) / r.width
       return [(e.clientX - r.left) * k, (e.clientY - r.top) * k - bandTop()]
     }
     const handler = (name) => (e) => {
@@ -131,6 +142,7 @@ export default function Stage({ page, onDone, paused = false }) {
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
+      screen.classList.remove('wide')
       canvas.removeEventListener('pointerdown', down)
       canvas.removeEventListener('pointermove', move)
       canvas.removeEventListener('pointerup', up)

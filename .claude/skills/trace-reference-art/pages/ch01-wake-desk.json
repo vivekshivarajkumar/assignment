@@ -1,0 +1,20 @@
+{
+  "page": "ch01-wake-desk",
+  "title": "Chapter 1, page 1, on a desktop screen",
+  "out": "src/game/chapters/ch01-wake-desk-trace.js",
+  "reference": {
+    "size": [2000, 1124],
+    "sha256": "3cf194eb0437ca6f9f99e43e49b4fd952a556443d1b8f688c09d0a32025922a2",
+    "note": "desktop screenshot shared in chat (webp) at 7:00: the scene in a square framed panel, wider than the phone's; not kept in the repo"
+  },
+  "trace": {
+    "colors": 16,
+    "keep": [[494, 54, 1512, 1070]],
+    "paint": [
+      { "rect": [845, 560, 1162, 676], "sample": [792, 604], "what": "the name on the label: the page writes its own" },
+      { "tile": [716, 782, 1292, 1049], "from": [700, 780], "what": "the quilt behind the clock card, which drops away" },
+      { "rect": [716, 1049, 1292, 1063], "sample": [640, 1056], "what": "the panel's bottom border, behind the card" },
+      { "rect": [716, 1063, 1292, 1070], "sample": [640, 1110], "what": "the page below it" }
+    ]
+  }
+}

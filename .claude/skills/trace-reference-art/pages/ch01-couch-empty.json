@@ -1,0 +1,16 @@
+{
+  "page": "ch01-couch-empty",
+  "title": "Chapter 1, page 7, the tray eaten",
+  "out": "src/game/chapters/ch01-couch-empty-trace.js",
+  "reference": {
+    "size": [1200, 2670],
+    "sha256": "7b65e78ba5be34891af010133402c9f42c60d86f12f513ea0bf5b2ec7d5e5155",
+    "note": "phone screenshot shared in chat of the couch page once every piece is eaten: the empty tray, the bar gone; not kept in the repo"
+  },
+  "trace": {
+    "status_bar": 77,
+    "colors": 16,
+    "keep": [[150, 1540, 1050, 1670], [190, 1840, 1005, 2265]],
+    "what": "only what changes once the tray is empty: the tray, and her lap where the bar was"
+  }
+}

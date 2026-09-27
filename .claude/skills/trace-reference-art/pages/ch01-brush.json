@@ -1,0 +1,27 @@
+{
+  "page": "ch01-brush",
+  "title": "Chapter 1, page 2",
+  "out": "src/game/chapters/ch01-brush-trace.js",
+  "reference": {
+    "size": [600, 1335],
+    "sha256": "0584af89c4f7f31c5a2203f10038bb2009357f9288aa57d32a79e21701bda246",
+    "note": "phone screenshot shared in chat (half size, JPEG), Mira brushing her teeth at the mirror; not kept in the repo"
+  },
+  "trace": {
+    "status_bar": 39,
+    "colors": 16,
+    "solid_max_gray": 100,
+    "solid_open": 4,
+    "speck": 2,
+    "ink_min_area": 1.5,
+    "ink_grow": 1,
+    "paint": [
+      { "circle": [539, 98, 32], "sample": [495, 98], "what": "the reference's home button, over the wall" },
+      { "rect": [548, 117, 564, 131], "sample": [556, 150], "what": "the cabinet frame it hid" },
+      { "rect": [568, 117, 576, 129], "sample": [586, 123], "what": "the cabinet's top shelf" },
+      { "line": [544, 115, 578, 115], "width": 4, "what": "the cabinet's top edge" },
+      { "line": [546, 113, 546, 134], "width": 4 },
+      { "line": [566, 115, 566, 134], "width": 4 }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "page": "ch01-commute",
+  "title": "Chapter 1, page 3",
+  "out": "src/game/chapters/ch01-commute-trace.js",
+  "reference": {
+    "size": [600, 1335],
+    "sha256": "dbdbdc30b29da11deae0d85fc381aa342777349d56bf0675b14312ccc0599d05",
+    "note": "phone screenshot shared in chat (half size, JPEG), Mira on the train scrolling her feed; not kept in the repo"
+  },
+  "trace": {
+    "status_bar": 39,
+    "colors": 18,
+    "solid_max_gray": 100,
+    "solid_open": 4,
+    "speck": 2,
+    "ink_min_area": 1.5,
+    "ink_grow": 1,
+    "paint": [
+      { "circle": [539, 98, 31], "sample": [470, 118], "what": "the reference's home button, over the advert" },
+      { "line": [496, 102, 600, 102], "width": 2, "what": "the route map line behind it" },
+      { "line": [506, 92, 533, 68], "width": 4, "what": "a scribble it clipped" }
+    ]
+  }
+}

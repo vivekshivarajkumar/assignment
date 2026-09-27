@@ -1,0 +1,24 @@
+{
+  "page": "ch01-wake-awake",
+  "title": "Chapter 1, page 1, at 7:15",
+  "out": "src/game/chapters/ch01-wake-awake-trace.js",
+  "reference": {
+    "size": [1200, 2670],
+    "sha256": "e33b141fc0f737565065fe5b6b36f0e0dd8fbfd57b27cca222127d658e896ad1",
+    "note": "phone screenshot shared in chat at 7:15, rolled over with a hand to her forehead; not kept in the repo"
+  },
+  "trace": {
+    "status_bar": 77,
+    "colors": 16,
+    "keep": [[0, 420, 1200, 1742]],
+    "what": "only what changes once she has rolled over: her, the pillow and the quilt",
+    "paint": [
+      { "circle": [1079, 196, 60], "sample": [985, 230], "what": "the reference's home button, over the headboard" },
+      { "rect": [355, 1530, 850, 1708], "sample": [292, 1600], "what": "the name on the label: the page writes its own" },
+      { "tile": [50, 1747, 222, 2062], "from": [1502, 1746], "what": "the quilt behind the clock card, which drops away: the quilt beside the label, repeated down" },
+      { "tile": [982, 1747, 1162, 2062], "from": [1502, 1746] },
+      { "tile": [222, 1747, 982, 2062], "from": [1746, 1747], "what": "under the label, its vertical lines carried down" },
+      { "rect": [50, 2062, 1162, 2392], "sample": [600, 2500], "what": "the paper below the torn edge, behind the card" }
+    ]
+  }
+}

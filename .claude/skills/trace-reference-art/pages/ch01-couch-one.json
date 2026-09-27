@@ -1,0 +1,16 @@
+{
+  "page": "ch01-couch-one",
+  "title": "Chapter 1, page 7, one maki left",
+  "out": "src/game/chapters/ch01-couch-one-trace.js",
+  "reference": {
+    "size": [1200, 2670],
+    "sha256": "423b3fd4672e8034407c06ae29245a59df18ae4e221f15de0757fa97a935addd",
+    "note": "phone screenshot shared in chat of the couch page with only the back-left maki left, whole; not kept in the repo"
+  },
+  "trace": {
+    "status_bar": 77,
+    "colors": 16,
+    "keep": [[198, 1862, 406, 2160]],
+    "what": "only the back-left maki, which the full tray half hides behind the one in front of it"
+  }
+}

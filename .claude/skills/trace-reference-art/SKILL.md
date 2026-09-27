@@ -105,6 +105,14 @@ true and the page draws in CSS pixels of the whole window (`api.width()` x
 the worked example: `drawDesk`, `DESK_*`. Offscreen art canvases must be as
 wide as the art, not the window, or a narrow window cuts it off.
 
+First page laid out this way without a desktop screenshot: `ch01-brush.js`
+(fill-the-width, 975/600 of its half-size reference). Two things the pattern
+didn't cover: at fill-the-width the scene is bigger relative to the card, so
+the view has to be moved (`from`) until the bar sits where it does on the
+phone, under her chin; and the phone's own bar ring, baked into the trace, then
+shows beside the card, so a small patch trace paints it out
+(`pages/ch01-brush-desk.json`).
+
 Desktop screenshots come in lighter grain (about half the phone's) and softer
 (webp, smaller): `DESK_GRAIN`, and expect near-line error around 20-25.
 

@@ -464,8 +464,8 @@ const DIGIT = { size: 150, narrow: 0.6, drop: 8 }
 // window, fitted to the real one. The scene fills a square framed panel; the
 // clock card and the label sit over it, smaller than on a phone, the card
 // hanging over the panel's bottom edge.
-const DESK = { w: 2000, h: 1124 }
-const DESK_PANEL = [494, 54, 1018, 1016] // what was traced of the panel, frame and all
+export const DESK = { w: 2000, h: 1124 }
+export const DESK_PANEL = [494, 54, 1018, 1016] // what was traced of the panel, frame and all
 // the phone's card, placed as on the desktop reference: its top left corner
 // (the phone reference's 64, 1756) at 720, 782, at 0.521 of the size
 const DESK_CARD = { x: 720, y: 782, scale: 0.521, from: [64, 1756] }
@@ -473,9 +473,9 @@ const DESK_CARD = { x: 720, y: 782, scale: 0.521, from: [64, 1756] }
 const DESK_NAME = { x: 1003, y: [587, 647], size: 41 }
 // the close-up of the clock the camera pans to at the end: a second panel to
 // the right, this far along
-const DESK_STEP = 1060
+export const DESK_STEP = 1060
 // the desktop references' grain is about half the phone's, measured
-const DESK_GRAIN = GRAIN * 0.5
+export const DESK_GRAIN = GRAIN * 0.5
 
 function deskLabel(ctx, alpha) {
   ctx.save()
@@ -507,11 +507,11 @@ function deskScene(ctx, awakeK) {
   ctx.restore()
 }
 
-// the close-up of the clock, in a panel of its own DESK_STEP to the right
-function deskCloseUp(ctx, text, foldCell, fold) {
+// the close-up of the clock, in a panel of its own `along` to the right
+export function deskCloseUp(ctx, text, foldCell, fold, along = DESK_STEP) {
   const [x, y, w, h] = DESK_PANEL
   ctx.save()
-  ctx.translate(DESK_STEP, 0)
+  ctx.translate(along, 0)
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(x + 9, y + 9, w - 18, h - 18)
   ctx.strokeStyle = K.ink

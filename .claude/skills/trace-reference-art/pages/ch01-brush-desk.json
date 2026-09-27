@@ -1,0 +1,46 @@
+{
+  "page": "ch01-brush-desk",
+  "title": "Chapter 1, page 2, without the bar (desktop)",
+  "out": "src/game/chapters/ch01-brush-desk-trace.js",
+  "reference": {
+    "size": [
+      600,
+      1335
+    ],
+    "sha256": "0584af89c4f7f31c5a2203f10038bb2009357f9288aa57d32a79e21701bda246",
+    "note": "phone screenshot shared in chat (half size, JPEG), Mira brushing her teeth at the mirror; not kept in the repo"
+  },
+  "trace": {
+    "status_bar": 39,
+    "colors": 16,
+    "solid_max_gray": 100,
+    "solid_open": 4,
+    "speck": 2,
+    "ink_min_area": 1.5,
+    "ink_grow": 1,
+    "paint": [
+      {
+        "tile": [
+          40,
+          768,
+          560,
+          832
+        ],
+        "from": [
+          710,
+          768
+        ],
+        "what": "the bar and its ring: on a desktop screen the bar sits elsewhere, and this part of the room shows beside the card"
+      }
+    ],
+    "keep": [
+      [
+        40,
+        740,
+        560,
+        850
+      ]
+    ],
+    "what": "a patch of the room where the phone bar was"
+  }
+}

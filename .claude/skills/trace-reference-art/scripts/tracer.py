@@ -15,6 +15,7 @@ DEFAULTS = {
     'merge_below': 3.0,  # Lab distance under which two colours are one
     'erase': [],  # [{"circle": [x, y, r], "carry_vertical_lines": true}]
     'paint': [],  # drawn onto the reference first, to rebuild art a button hides (see below)
+    'keep': [],  # [[x0, y0, x1, y1], ...]: trace only these parts; the rest is left as paper
     'erase_fill_min_gray': 150,  # what counts as plain background around an erased thing
     'ink_smooth': 0.9,  # blur on the 2x ink mask before contouring
     'ink_eps': 0.45,  # polygon simplification for ink, in reference pixels
@@ -62,6 +63,12 @@ def trace(ref, cfg):
             cv2.rectangle(ref, tuple(s['rect'][:2]), tuple(s['rect'][2:]), col, -1)
         else:
             cv2.line(ref, tuple(s['line'][:2]), tuple(s['line'][2:]), col, s['width'], cv2.LINE_AA)
+    if c['keep']:
+        # a second state of a page only needs the parts that change
+        inside = np.zeros((h, w), bool)
+        for x0, y0, x1, y1 in c['keep']:
+            inside[y0:y1, x0:x1] = True
+        ref[~inside] = 255
     gray = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY).astype(np.float32)
 
     # things in the screenshot that aren't the page (the game's own buttons):

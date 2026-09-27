@@ -83,8 +83,11 @@ while the page is open is drawn over the copy, never into it.
 ## Live parts
 
 - **Removed items** (with `regions`): union the removed pieces' paths into one
-  `Path2D` and fill it once with `FLOOR`. Filling them one by one leaves a
-  hairline seam where two pieces met.
+  `Path2D`, clip to it, and copy in the traced empty state (its own cached
+  canvas, painted the first time a piece goes). One clip for all of them: one
+  by one leaves a hairline seam where two pieces met. `ch01-couch.js` also
+  draws a hidden piece whole and gives front pieces their outline back; see
+  the skill's *Regions*. With no empty-state screenshot, fill with `FLOOR`.
 - **UI in reference pixels**: measured positions go straight into the scaled
   block (the couch's `bar()`). Colours of things carried over from another page
   (the bar's `FILL`, `K.ink`) come from that page, not from the trace.

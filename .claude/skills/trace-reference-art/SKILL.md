@@ -145,10 +145,24 @@ between items to the nearest one, so removing everything leaves a clean empty
 container, and samples the floor's colour for `FLOOR`. The shapes only need to be
 right to about 15 px; the watershed finds the real edge. Check the tinted preview.
 
-One limit to tell the user about: where an item in front hides part of one
-behind, removing the front one shows empty floor where the hidden part would be,
-because the reference never showed it. It reads as a gap. Filling it means
-inventing art.
+What shows where an item has gone: trace a screenshot of the page with
+everything taken away as a second config (`keep` limits the trace to what
+changes, `pages/ch01-couch-empty.json`), paint it into its own canvas, and copy
+it in clipped to the eaten regions. A flat `FLOOR` fill is only the fallback;
+on the couch it read as dark holes (error 12.4 against the empty-tray
+screenshot, 3.9 traced).
+
+Where an item in front hides part of one behind, taking the front one away
+should show the rest of the one behind. Only a screenshot can show that: the
+couch has one of the back-left maki left alone (`pages/ch01-couch-one.json`),
+drawn over its own region too once the one in front has gone, since that
+one's outline crossed it. For the others the reference never showed the
+hidden part; tell the user, and ask for a screenshot of that state.
+
+Two regions meet down the middle of the ink line between them, which belongs
+to the item in front. When the one behind goes, give the one in front its
+other half back: the pen only (not the still art, which brings the eaten
+item's edge with it) in a band along its region, clipped to the eaten area.
 
 ## Traps
 
@@ -166,6 +180,8 @@ Each of these cost a round on the couch. The symptom is how you'll recognise it.
 | Grain on white paper | The reference's paper has none; only paint does | Grain everywhere, then the white layer repainted clean |
 | The screenshot's own button gets traced | It's part of the image | `erase` in the config, with lines carried through |
 | Removing items leaves outlines or seams | Regions didn't own the floor between them; each drawn separately | Regions take the floor gaps; removed ones are filled as one shape |
+| Eaten pieces leave dark holes; the bar stays after the tray is empty | The flat `FLOOR` fill, and the page drew the bar to the end | Trace the empty state and copy it in where pieces went; hide the bar once full, and her lap shows where it was |
+| A piece left behind shows a cut-off bottom, or the eaten piece's outline across it | The piece in front hid it in the reference | A screenshot of it alone, over its own region too once the one in front goes (see *Regions*) |
 | Removed item shows a grey cut-out | Wrong floor colour: the sample caught nearby grey | Sample within the floor's gray band; check the preview |
 | Hair turns into black blocks, dark tiles trace as grey brush, thin grout vanishes (brushing page) | A half-size screenshot (600 px wide): the 7 px solid-area opening and 3 px speck opening are too big for it, and the tiles are darker than the solid band | `solid_open` 4, `speck` 2, `solid_max_gray` 100 in the config; halve `SOFT` and retune `GRAIN` (0.3 and 0.9 there) |
 | Eyes come out as faint grey dashes, every line a touch light (commute page) | Contours run through pixel centres, so each traced stroke loses half a 2x pixel a side; on a half-size screenshot a 2 px eye dash loses half its weight | `ink_grow` 1 (near-line error 14.3 to 13.9 on both half-size pages) |

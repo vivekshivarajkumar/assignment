@@ -5,12 +5,17 @@
 // sheet shows; on a shorter screen the top of the headboard is cropped.
 // The bedroom is traced from two references, asleep at 7:00 (ch01-wake-trace.js)
 // and rolled over at 7:15 (ch01-wake-awake-trace.js); the clock card, the name
-// on the label and the end of the bed are drawn here.
+// on the label and the end of the bed are drawn here. On a desktop screen the
+// page is laid out as the desktop references are: the scene in a square framed
+// panel, traced from them (ch01-wake-desk*-trace.js), with the same card and
+// label smaller over it.
 import { W, UI_FONT, tapHint, rng, clamp, easeOut, easeInOut } from '../paint.js'
 import { pop, alarmClock } from '../sound.js'
 import * as ASLEEP from './ch01-wake-trace.js'
 import * as ROLLED from './ch01-wake-awake-trace.js'
 import * as CARD_ART from './ch01-wake-card-trace.js'
+import * as DESK_ASLEEP from './ch01-wake-desk-trace.js'
+import * as DESK_ROLLED from './ch01-wake-desk-awake-trace.js'
 
 const SANS = "'Montserrat', 'Helvetica Neue', Arial, sans-serif"
 
@@ -231,12 +236,20 @@ const traced = ({ LAYERS, BRUSH, INK, INK_COLOR }) => ({
 })
 // Path2D objects are built the first time they're needed.
 const art = {}
-const paths = (name) => (art[name] ??= traced({ asleep: ASLEEP, rolled: ROLLED, card: CARD_ART }[name]))
+const TRACES = {
+  asleep: ASLEEP,
+  rolled: ROLLED,
+  card: CARD_ART,
+  'desk-asleep': DESK_ASLEEP,
+  'desk-rolled': DESK_ROLLED,
+  'desk-card': CARD_ART,
+}
+const paths = (name) => (art[name] ??= traced(TRACES[name]))
 
 // Colour flat, then grain, then the brush and pen over everything, as on the
 // couch page. The art is traced at half-pixel steps, hence the halving.
-function paint(g, a) {
-  const tiles = grainTiles(g)
+function paint(g, a, [w, h] = [1200, 2670], grain = GRAIN) {
+  const tiles = grainTiles(g, grain)
   g.save()
   g.scale(0.5, 0.5)
   let paper = null
@@ -249,10 +262,10 @@ function paint(g, a) {
   // grain over the paint, then the white paper painted back clean
   g.globalCompositeOperation = 'lighter'
   g.fillStyle = tiles.up
-  g.fillRect(0, 0, 1200, 2670)
+  g.fillRect(0, 0, w, h)
   g.globalCompositeOperation = 'difference'
   g.fillStyle = tiles.down
-  g.fillRect(0, 0, 1200, 2670)
+  g.fillRect(0, 0, w, h)
   g.globalCompositeOperation = 'source-over'
   g.save()
   g.scale(0.5, 0.5)
@@ -273,7 +286,7 @@ function paint(g, a) {
 // 'lighter', and the part that darkens, taken off with 'difference', which is
 // an exact subtraction wherever the paint is brighter than the grain: all of it.
 const GRAIN = 2.4
-function grainTiles(g) {
+function grainTiles(g, grain) {
   const N = 256
   const r = rng(11)
   const dots = new Float32Array(N * N)
@@ -291,7 +304,7 @@ function grainTiles(g) {
   }
   let sq = 0
   for (const v of n) sq += v * v
-  const k = GRAIN / Math.sqrt(sq / n.length)
+  const k = grain / Math.sqrt(sq / n.length)
   const tile = (sign) => {
     const c = document.createElement('canvas')
     c.width = c.height = N
@@ -350,11 +363,15 @@ function stillArt(ctx, name, m = ctx.getTransform()) {
   const key = [width, height, m.a, m.d, m.f].join()
   if (stills[name]?.key !== key) {
     const c = document.createElement('canvas')
-    c.width = width
+    // wide enough for the whole picture, which can run past the screen's
+    // right edge before it's copied in shifted
+    const art = name.startsWith('desk-') && name !== 'desk-card' ? DESK.w : 1200
+    c.width = Math.max(width, Math.ceil(art * m.a))
     c.height = height
     const g = c.getContext('2d')
     g.setTransform(m.a, m.b, m.c, m.d, 0, m.f)
-    paint(g, paths(name))
+    const desk = name.startsWith('desk-')
+    paint(g, paths(name), desk && name !== 'desk-card' ? [DESK.w, DESK.h] : undefined, desk ? DESK_GRAIN : GRAIN)
     soften(c, SOFT * m.a)
     stills[name] = { key, canvas: c }
   }
@@ -402,15 +419,14 @@ const CARD_AREA = [60, 1752, 1090, 618]
 const FLAPS = [340, 435, 563, 661.5] // middles
 const FLAP = { y: 2097, w: 74, h: 136 }
 
-// `base` is the page's transform before the card is moved (dropped, tilted,
-// shaken); the traced card is painted once for it and copied in moved.
+// Drawn in reference pixels of the phone reference. `at` is the transform the
+// card has at rest (not dropped, tilted or shaken): the traced card is painted
+// once for it, as `name`, and copied in moved.
 // `flip` runs 0..1 while the minute changes; the changing flaps fold over.
-function clockCard(ctx, base, alpha, digits, flip, changing) {
+function clockCard(ctx, at, name, alpha, digits, flip, changing) {
   ctx.save()
   ctx.globalAlpha = alpha
-  ctx.scale(REF, REF)
-  const at = base.scale(REF, REF)
-  const card = stillArt(ctx, 'card', at)
+  const card = stillArt(ctx, name, at)
   const here = ctx.getTransform()
   ctx.beginPath()
   ctx.rect(...CARD_AREA)
@@ -442,6 +458,72 @@ function clockCard(ctx, base, alpha, digits, flip, changing) {
 }
 // the flap digits, sized to the reference's: about 100 px tall, 50 wide
 const DIGIT = { size: 150, narrow: 0.6, drop: 8 }
+
+// ---------- on a desktop screen ----------
+// Laid out as the desktop references are, in their pixels: a 2000 x 1124
+// window, fitted to the real one. The scene fills a square framed panel; the
+// clock card and the label sit over it, smaller than on a phone, the card
+// hanging over the panel's bottom edge.
+const DESK = { w: 2000, h: 1124 }
+const DESK_PANEL = [494, 54, 1018, 1016] // what was traced of the panel, frame and all
+// the phone's card, placed as on the desktop reference: its top left corner
+// (the phone reference's 64, 1756) at 720, 782, at 0.521 of the size
+const DESK_CARD = { x: 720, y: 782, scale: 0.521, from: [64, 1756] }
+// the name on the label: line centres and size, measured on the reference
+const DESK_NAME = { x: 1003, y: [587, 647], size: 41 }
+// the close-up of the clock the camera pans to at the end: a second panel to
+// the right, this far along
+const DESK_STEP = 1060
+// the desktop references' grain is about half the phone's, measured
+const DESK_GRAIN = GRAIN * 0.5
+
+function deskLabel(ctx, alpha) {
+  ctx.save()
+  ctx.globalAlpha = alpha
+  ctx.fillStyle = K.ink
+  ctx.font = `600 ${DESK_NAME.size}px ${UI_FONT}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('Mira Sen', DESK_NAME.x, DESK_NAME.y[0])
+  ctx.fillText('25 years old', DESK_NAME.x, DESK_NAME.y[1])
+  ctx.restore()
+}
+
+// the traced panel: 7:00, with 7:15 faded in over it as she rolls over
+function deskScene(ctx, awakeK) {
+  const x = ctx.getTransform().e
+  const asleep = stillArt(ctx, 'desk-asleep')
+  const rolled = awakeK > 0 && stillArt(ctx, 'desk-rolled')
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(...DESK_PANEL)
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.drawImage(asleep, x, 0)
+  if (rolled) {
+    ctx.clip()
+    ctx.globalAlpha = awakeK
+    ctx.drawImage(rolled, x, 0)
+  }
+  ctx.restore()
+}
+
+// the close-up of the clock, in a panel of its own DESK_STEP to the right
+function deskCloseUp(ctx, text, foldCell, fold) {
+  const [x, y, w, h] = DESK_PANEL
+  ctx.save()
+  ctx.translate(DESK_STEP, 0)
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(x + 9, y + 9, w - 18, h - 18)
+  ctx.strokeStyle = K.ink
+  ctx.lineWidth = 11
+  ctx.strokeRect(x + 14, y + 14, w - 28, h - 28)
+  // the phone's close-up, whose display is centred on 497, 1028 of its sheet
+  ctx.translate(x + w / 2, y + h / 2)
+  ctx.scale(0.8, 0.8)
+  ctx.translate(-497, -1028)
+  bigDisplay(ctx, text, foldCell, fold)
+  ctx.restore()
+}
 
 // Close-up of the clock's face: four split flaps, big, e.g. "07:28".
 // Drawn in the close-up panel's own coordinates (same as the phone sheet).
@@ -527,6 +609,19 @@ export default function wakeUp(api) {
   let stoppedAt = null
   let alarm = alarmClock()
   const toScreen = (y) => (y - sheetTop(api.height())) * 0.6
+  // on a desktop screen: the reference window fitted to the real one
+  const fit = () => {
+    const k = Math.min(api.height() / DESK.h, api.width() / 1200)
+    return { k, x: (api.width() - DESK.w * k) / 2, y: (api.height() - DESK.h * k) / 2 }
+  }
+  const fromDesk = (x, y) => {
+    const f = fit()
+    return [f.x + x * f.k, f.y + y * f.k]
+  }
+  const deskCardRect = () => {
+    const { x, y, scale } = DESK_CARD
+    return [x, y, (CARD_AREA[0] + CARD_AREA[2] - DESK_CARD.from[0]) * scale, (CARD_AREA[1] + CARD_AREA[3] - DESK_CARD.from[1]) * scale]
+  }
   const inClock = (y) => y > toScreen(CARD_AREA[1] * REF) && y < toScreen((CARD_AREA[1] + CARD_AREA[3]) * REF)
   // what the clock and Mira are doing at time t
   const state = (t) => {
@@ -574,15 +669,69 @@ export default function wakeUp(api) {
   const minuteAt = (t) => Math.min(LATE, 15 + Math.max(0, Math.floor((t - countStart()) / TICK)))
   const countDone = (t) => stoppedAt !== null && t > countStart() + (LATE - 15) * TICK + 0.4
 
+  // the same page on a desktop screen, in the desktop reference's pixels
+  function drawDesk(ctx, t, st) {
+    const f = fit()
+    ctx.save()
+    ctx.translate(f.x, f.y)
+    ctx.scale(f.k, f.k)
+    ctx.translate(-(panAt(t) / PAN) * DESK_STEP, 0)
+    deskScene(ctx, st.awakeK)
+    const at = card(t)
+    if (at) {
+      const { x, y, scale, from } = DESK_CARD
+      const place = new DOMMatrix().translate(x, y).scale(scale).translate(-from[0], -from[1])
+      const rest = ctx.getTransform().multiply(place)
+      const [cx, cy, cw, ch] = deskCardRect()
+      const k = scale / REF // the phone's sheet units to these pixels
+      ctx.save()
+      if (st.ringing) ctx.translate(Math.sin(t * 70) * 5 * k, 0)
+      ctx.translate(cx + cw / 2, cy + ch / 2 + at[0] * k)
+      ctx.rotate(at[1])
+      ctx.translate(-(cx + cw / 2), -(cy + ch / 2))
+      ctx.transform(place.a, place.b, place.c, place.d, place.e, place.f)
+      clockCard(ctx, rest, 'desk-card', easeOut((t - 0.5) / 0.6), st.digits, st.flip, st.changing)
+      ctx.restore()
+    }
+    deskLabel(ctx, easeOut((t - 0.9) / 0.6))
+    if (stoppedAt !== null) {
+      const m = minuteAt(t)
+      const tick = (t - countStart()) / TICK
+      const ticking = m < LATE && tick > 0
+      deskCloseUp(ctx, `07${String(m).padStart(2, '0')}`, ticking ? 3 : -1, ticking ? tick % 1 : 0)
+    }
+    ctx.restore()
+    const black = dark(t)
+    if (black > 0) {
+      ctx.fillStyle = `rgba(0,0,0,${black})`
+      ctx.fillRect(0, 0, api.width(), api.height())
+    }
+    const ringSince = snoozedAt === null ? FLIP_AT : snoozedAt + RETURN[1] + 0.7
+    if (st.ringing && t > ringSince + 2.5) {
+      const [x, y, w] = deskCardRect()
+      tapHint(ctx, ...fromDesk(x + w / 2, y + 60), t, K.ink)
+    }
+    if (countDone(t)) tapHint(ctx, 50, 50, t)
+  }
+
   return {
     tall: true,
+    wide: true, // it has a desktop layout
     // test hook: where to tap to stop the alarm
-    debug: () => ({ tap: [W / 2, toScreen(1560)] }),
+    debug: () => {
+      if (!api.wide()) return { tap: [W / 2, toScreen(1560)] }
+      const [x, y, w, h] = deskCardRect()
+      return { tap: fromDesk(x + w / 2, y + h / 2) }
+    },
     draw(ctx, t) {
       ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, W, api.height())
+      ctx.fillRect(0, 0, api.width(), api.height())
       const st = state(t)
       if (st.ringing) alarm.ring()
+      if (api.wide()) {
+        drawDesk(ctx, t, st)
+        return
+      }
       const pan = panAt(t)
       ctx.save()
       ctx.scale(0.6, 0.6)
@@ -597,7 +746,8 @@ export default function wakeUp(api) {
         ctx.translate(CARD[0], CARD[1] + at[0])
         ctx.rotate(at[1])
         ctx.translate(-CARD[0], -CARD[1])
-        clockCard(ctx, base, easeOut((t - 0.5) / 0.6), st.digits, st.flip, st.changing)
+        ctx.scale(REF, REF)
+        clockCard(ctx, base.scale(REF, REF), 'card', easeOut((t - 0.5) / 0.6), st.digits, st.flip, st.changing)
         ctx.restore()
       }
       nameLabel(ctx, easeOut((t - 0.9) / 0.6))
@@ -629,7 +779,12 @@ export default function wakeUp(api) {
         if (countDone(t)) api.finish()
         return
       }
-      if (!inClock(y) || !state(t).ringing) return
+      if (api.wide()) {
+        const f = fit()
+        const [dx, dy] = [(x - f.x) / f.k, (y - f.y) / f.k]
+        const [cx, cy, cw, ch] = deskCardRect()
+        if (dx < cx || dx > cx + cw || dy < cy || dy > cy + ch || !state(t).ringing) return
+      } else if (!inClock(y) || !state(t).ringing) return
       alarm.stop()
       alarm = alarmClock()
       pop(300)

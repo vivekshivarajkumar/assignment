@@ -79,6 +79,35 @@ Measure positions (bars, buttons, items) straight off the reference.
 
 7. **Commit** the config, the generated module and the page. Not the reference.
 
+## Desktop layout
+
+On a landscape window the original is not the phone page scaled up: it's a
+white page with the scene in a square framed panel. Measured on the wake page
+(desktop screenshots 2000 x 1124, `pages/ch01-wake-desk*.json`):
+
+| | Phone (1200 x 2670 ref) | Desktop (2000 x 1124 ref) |
+|---|---|---|
+| Scene | full width, torn bottom edge | square panel 504..1501 x 54..1062, heavy frame, centred |
+| Scale of the art | 1 | 0.61 of the phone's |
+| View | phone x 0..1200, y 77..~1740 | phone x -200..1400, y ~445..2040: about 200 px more each side, the headboard's top cut, more quilt below |
+| Label | 170..730 x 1128..1300 | over the panel's lower middle, text at 41 px (phone 50 at 0.75) |
+| Card (clock) | 64..1146 x 1756..2366 | 720..1285 x 782..1100: 0.521 of the phone card, centred, hanging over the frame's bottom edge |
+
+The pattern for a page without desktop screenshots: the same panel and frame,
+the phone art at 0.61 centred in it, and the card at 0.521 centred and hanging
+over its bottom edge. The strips the phone never shows (about 200 phone px
+each side) have to come from a desktop screenshot; without one, scale the
+phone art to fill the panel's width instead and say the view is narrower.
+
+The engine: a page sets `wide: true`; on a landscape window `api.wide()` is
+true and the page draws in CSS pixels of the whole window (`api.width()` x
+`api.height()`), fitting the 2000 x 1124 reference into it. `ch01-wake.js` is
+the worked example: `drawDesk`, `DESK_*`. Offscreen art canvases must be as
+wide as the art, not the window, or a narrow window cuts it off.
+
+Desktop screenshots come in lighter grain (about half the phone's) and softer
+(webp, smaller): `DESK_GRAIN`, and expect near-line error around 20-25.
+
 ## Measure, don't eyeball
 
 Eyeballing is how the couch went wrong twice. Render the page at the

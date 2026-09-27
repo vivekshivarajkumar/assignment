@@ -36,6 +36,12 @@ body {
   background: var(--paper);
 }
 
+/* a page with a desktop layout, on a landscape window: the whole window */
+.screen.wide {
+  width: 100vw;
+  background: #ffffff;
+}
+
 .stage {
   display: block;
   width: 100%;
